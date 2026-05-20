@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ru" className="h-full dark">
-      <body className="min-h-full bg-black text-white">
+    <html lang="ru">
+      <body>
         <TMAProvider>{children}</TMAProvider>
       </body>
     </html>

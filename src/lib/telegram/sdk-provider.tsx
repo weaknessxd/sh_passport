@@ -11,6 +11,7 @@ type TMAUser = {
   display_name: string | null
   avatar_url: string | null
   onboarded: boolean
+  has_password: boolean
 }
 
 type TMAContextValue = {

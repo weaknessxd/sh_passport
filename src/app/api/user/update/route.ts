@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
+import crypto from 'node:crypto'
 import { validateInitData, InitDataValidationError } from '@/lib/telegram/validate-init-data'
 import { db } from '@/lib/db/client'
 import { users } from '@/lib/db/schema'
@@ -11,7 +12,12 @@ const bodySchema = z.object({
   last_name: z.string().max(64).trim().optional(),
   email: z.string().email().optional(),
   birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  password: z.string().min(4).max(128).optional(),
 })
+
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex')
+}
 
 export async function POST(request: Request) {
   let body: unknown
@@ -26,7 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { initData, ...fields } = parsed.data
+  const { initData, password, ...fields } = parsed.data
 
   const botToken = process.env.TG_BOT_TOKEN
   if (!botToken) {
@@ -44,20 +50,18 @@ export async function POST(request: Request) {
   }
 
   const tgId = BigInt(validated.user.id)
-
-  // Находим юзера
   const existing = await db.select().from(users).where(eq(users.tg_id, tgId)).limit(1)
   const user = existing[0] ?? null
   if (!user) {
     return NextResponse.json({ error: 'user not found' }, { status: 404 })
   }
 
-  // Обновляем только переданные поля
   const updateData: Record<string, string> = {}
   if (fields.first_name) updateData['first_name'] = fields.first_name
   if (fields.last_name !== undefined) updateData['last_name'] = fields.last_name
   if (fields.email) updateData['email'] = fields.email
   if (fields.birth_date) updateData['birth_date'] = fields.birth_date
+  if (password) updateData['password_hash'] = hashPassword(password)
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: 'no fields to update' }, { status: 400 })
@@ -84,7 +88,8 @@ export async function POST(request: Request) {
       last_name: u.last_name,
       display_name: u.display_name,
       avatar_url: u.avatar_url,
-      onboarded: Boolean(u.first_name && u.email),
+      onboarded: Boolean(u.email),
+      has_password: Boolean(u.password_hash),
     },
   })
 }

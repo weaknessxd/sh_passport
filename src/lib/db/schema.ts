@@ -18,6 +18,7 @@ export const users = passport.table('users', {
   tg_id: bigint('tg_id', { mode: 'bigint' }).notNull().unique(),
   tg_username: text('tg_username'),
   email: text('email'),
+  password_hash: text('password_hash'),
   first_name: text('first_name'),
   last_name: text('last_name'),
   birth_date: date('birth_date'),

@@ -11,10 +11,16 @@ export default function Home() {
   useEffect(() => {
     if (loading) return
     if (!user) return
-    if (user.onboarded) {
-      router.replace('/passport')
-    } else {
+
+    if (!user.onboarded) {
+      // Нет email → онбординг
       router.replace('/onboarding')
+    } else if (user.has_password) {
+      // Есть пароль → экран разблокировки
+      router.replace('/unlock')
+    } else {
+      // Онбордирован, без пароля → сразу в паспорт
+      router.replace('/passport')
     }
   }, [user, loading, router])
 

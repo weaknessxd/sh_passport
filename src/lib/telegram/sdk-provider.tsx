@@ -17,32 +17,29 @@ type TMAContextValue = {
   user: TMAUser | null
   loading: boolean
   error: string | null
+  initData: string | null
+  setUser: (user: TMAUser) => void
 }
 
 const TMAContext = createContext<TMAContextValue>({
   user: null,
   loading: true,
   error: null,
+  initData: null,
+  setUser: () => {},
 })
 
-/**
- * Извлекаем initData из всех возможных источников:
- * 1. window.Telegram.WebApp.initData (telegram-web-app.js уже загружен)
- * 2. URL hash: #tgWebAppData=<url-encoded-init-data>
- */
 function getInitData(): string | null {
   if (typeof window === 'undefined') return null
 
-  // Способ 1 — через telegram-web-app.js
   try {
     const tg = (window as unknown as { Telegram?: { WebApp?: { initData?: string } } }).Telegram
     const initData = tg?.WebApp?.initData
     if (initData && initData.length > 0) return initData
   } catch { /* ignore */ }
 
-  // Способ 2 — из URL hash (#tgWebAppData=...)
   try {
-    const hash = window.location.hash.slice(1) // убираем #
+    const hash = window.location.hash.slice(1)
     const params = new URLSearchParams(hash)
     const tgWebAppData = params.get('tgWebAppData')
     if (tgWebAppData && tgWebAppData.length > 0) return tgWebAppData
@@ -55,20 +52,23 @@ export function TMAProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<TMAUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [initData, setInitData] = useState<string | null>(null)
 
   useEffect(() => {
     async function initTMA() {
       try {
-        const initData = getInitData()
+        const data = getInitData()
 
-        if (!initData) {
+        if (!data) {
           throw new Error('Открой приложение через Telegram')
         }
+
+        setInitData(data)
 
         const res = await fetch('/api/auth/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ initData }),
+          body: JSON.stringify({ initData: data }),
         })
 
         if (!res.ok) {
@@ -76,8 +76,8 @@ export function TMAProvider({ children }: { children: React.ReactNode }) {
           throw new Error(`Auth ${res.status}: ${body}`)
         }
 
-        const data = (await res.json()) as { ok: boolean; user: TMAUser }
-        setUser(data.user)
+        const json = (await res.json()) as { ok: boolean; user: TMAUser }
+        setUser(json.user)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
@@ -89,7 +89,7 @@ export function TMAProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <TMAContext.Provider value={{ user, loading, error }}>
+    <TMAContext.Provider value={{ user, loading, error, initData, setUser }}>
       {children}
     </TMAContext.Provider>
   )

@@ -1,24 +1,52 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
+import { PassportViewer } from '@/components/passport/PassportViewer'
+
+type StampData = {
+  id: number
+  name: string
+  icon: string | null
+  issued_at: string | null
+}
 
 export default function PassportPage() {
-  const { user } = useTMAUser()
+  const { user, initData } = useTMAUser()
+  const [stamps, setStamps] = useState<StampData[]>([])
 
-  const displayName =
-    user?.display_name ??
-    user?.first_name ??
-    user?.tg_username ??
-    'Участник'
+  useEffect(() => {
+    if (!initData) return
+    fetch('/api/user/stamps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData }),
+    })
+      .then((r) => r.json())
+      .then((data: { stamps?: StampData[] }) => {
+        if (data.stamps) setStamps(data.stamps)
+      })
+      .catch(() => { /* штампы не критичны */ })
+  }, [initData])
+
+  if (!user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+      </div>
+    )
+  }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-2 px-6 text-center">
-      <p className="text-xs uppercase tracking-widest text-zinc-500">Паспорт Щёлочь</p>
-      <h1 className="text-3xl font-semibold">{displayName}</h1>
-      {user?.tg_username && (
-        <p className="text-sm text-zinc-400">@{user.tg_username}</p>
-      )}
-      <p className="mt-4 text-xs text-zinc-600">MVP — интерфейс паспорта в разработке</p>
-    </div>
+    <PassportViewer
+      user={{
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        tg_username: user.tg_username,
+        avatar_url: user.avatar_url,
+      }}
+      stamps={stamps}
+    />
   )
 }

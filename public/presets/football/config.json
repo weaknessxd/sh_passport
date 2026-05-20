@@ -1,0 +1,37 @@
+{
+  "series_code": "FB25",
+  "total_pages": 16,
+  "colors": {
+    "primary": "#0a0a14",
+    "accent": "#e94560",
+    "text": "#f0f0f0",
+    "muted": "#6b7280",
+    "border": "#1f2937"
+  },
+  "pages": [
+    { "index": 0, "type": "cover",  "bg": "#0d0d1a", "label": "Обложка" },
+    { "index": 1, "type": "main",   "bg": "#0a0a14", "label": "Профиль" },
+    { "index": 2, "type": "main2",  "bg": "#0a0a14", "label": "ИНВ" },
+    { "index": 3, "type": "stamps", "bg": "#0b0b16", "label": "Штампы I" },
+    { "index": 4, "type": "stamps", "bg": "#0b0b16", "label": "Штампы II" },
+    { "index": 5, "type": "stamps", "bg": "#0b0b16", "label": "Штампы III" },
+    { "index": 6, "type": "stamps", "bg": "#0b0b16", "label": "Штампы IV" },
+    { "index": 7, "type": "stamps", "bg": "#0b0b16", "label": "Штампы V" },
+    { "index": 8, "type": "stamps", "bg": "#0b0b16", "label": "Штампы VI" },
+    { "index": 9, "type": "stamps", "bg": "#0b0b16", "label": "Штампы VII" },
+    { "index": 10, "type": "stamps","bg": "#0b0b16", "label": "Штампы VIII" },
+    { "index": 11, "type": "stamps","bg": "#0b0b16", "label": "Штампы IX" },
+    { "index": 12, "type": "stamps","bg": "#0b0b16", "label": "Штампы X" },
+    { "index": 13, "type": "format","bg": "#0c0c18", "label": "Напоминалки" },
+    { "index": 14, "type": "format","bg": "#0c0c18", "label": "История" },
+    { "index": 15, "type": "final", "bg": "#0d0d1a", "label": "Финал" }
+  ],
+  "fields": {
+    "cover_title":    { "top": "18%", "left": "50%", "align": "center" },
+    "cover_subtitle": { "top": "26%", "left": "50%", "align": "center" },
+    "inv_number":     { "top": "38%", "left": "50%", "align": "center" },
+    "full_name":      { "top": "52%", "left": "8%",  "align": "left" },
+    "username":       { "top": "60%", "left": "8%",  "align": "left" },
+    "avatar":         { "top": "30%", "left": "50%", "align": "center" }
+  }
+}

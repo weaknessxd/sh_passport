@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { PageNavigator } from './PageNavigator'
 import { CoverPage } from './pages/CoverPage'
@@ -114,6 +115,18 @@ export function PassportViewer({
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Кнопка получения штампа на страницах со штампами */}
+      {page >= STAMPS_PAGE_START && page < STAMPS_PAGE_START + STAMPS_PAGE_COUNT && (
+        <div className="px-4 pt-2">
+          <Link
+            href="/stamps/claim"
+            className="block w-full rounded-lg border border-[#e94560] py-2 text-center text-sm font-medium text-[#e94560] active:bg-[#e94560]/10"
+          >
+            + Получить штамп
+          </Link>
+        </div>
+      )}
 
       {/* Навигация */}
       <div className="mb-2">

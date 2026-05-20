@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
 
@@ -96,7 +95,6 @@ function TextArea({
 
 export default function SettingsPage() {
   const { user, initData, setUser } = useTMAUser()
-  const router = useRouter()
 
   const [data, setData] = useState<ProfileData>({
     first_name: '',
@@ -282,18 +280,6 @@ export default function SettingsPage() {
               maxLength={256}
             />
           </div>
-        </section>
-
-        {/* Пароль */}
-        <section>
-          <p className="mb-1 text-xs uppercase tracking-widest text-zinc-500">Безопасность</p>
-          <p className="mb-3 text-xs text-zinc-600">Смена пароля — на странице входа</p>
-          <Link
-            href="/forgot-password"
-            className="block rounded-lg border border-zinc-700 px-4 py-3 text-sm text-zinc-400"
-          >
-            Изменить пароль →
-          </Link>
         </section>
 
         {/* Ошибка */}

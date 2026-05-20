@@ -13,13 +13,8 @@ export default function Home() {
     if (!user) return
 
     if (!user.onboarded) {
-      // Нет email → онбординг
       router.replace('/onboarding')
-    } else if (user.has_password) {
-      // Есть пароль → экран разблокировки
-      router.replace('/unlock')
     } else {
-      // Онбордирован, без пароля → сразу в паспорт
       router.replace('/passport')
     }
   }, [user, loading, router])

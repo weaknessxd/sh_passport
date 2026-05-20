@@ -101,7 +101,6 @@ export async function POST(request: Request) {
       avatar_url: user.avatar_url,
       birth_date: user.birth_date ?? null,
       onboarded: Boolean(user.email),
-      has_password: Boolean(user.password_hash),
     },
     is_new: isNew,
   })

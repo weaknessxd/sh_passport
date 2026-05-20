@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
 
 export default function Home() {
-  const { user, loading } = useTMAUser()
+  const { user, loading, error } = useTMAUser()
   const router = useRouter()
 
   useEffect(() => {
@@ -17,6 +17,15 @@ export default function Home() {
       router.replace('/onboarding')
     }
   }, [user, loading, router])
+
+  if (error) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-sm text-red-400">{error}</p>
+        <p className="text-xs text-zinc-500">Открой приложение через Telegram</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen items-center justify-center">

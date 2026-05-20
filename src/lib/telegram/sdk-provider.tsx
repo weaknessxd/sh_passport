@@ -1,7 +1,6 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { init, miniApp, retrieveLaunchParams } from '@telegram-apps/sdk-react'
 
 type TMAUser = {
   id: number
@@ -26,6 +25,17 @@ const TMAContext = createContext<TMAContextValue>({
   error: null,
 })
 
+function getRawInitData(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    // window.Telegram.WebApp.initData — строка от Telegram
+    const tg = (window as unknown as { Telegram?: { WebApp?: { initData?: string } } }).Telegram
+    return tg?.WebApp?.initData ?? null
+  } catch {
+    return null
+  }
+}
+
 export function TMAProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<TMAUser | null>(null)
   const [loading, setLoading] = useState(true)
@@ -34,16 +44,21 @@ export function TMAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function initTMA() {
       try {
+        // Динамический импорт — SDK не должен запускаться на сервере
+        const { init, retrieveLaunchParams } = await import('@telegram-apps/sdk-react')
         init()
 
-        if (miniApp.isMounted()) {
-          miniApp.mount()
+        let initDataRaw: string | null = null
+        try {
+          const params = retrieveLaunchParams()
+          initDataRaw = params.initDataRaw ? String(params.initDataRaw) : null
+        } catch {
+          // Не в Telegram — пробуем напрямую через window
+          initDataRaw = getRawInitData()
         }
 
-        const { initDataRaw } = retrieveLaunchParams()
-
         if (!initDataRaw) {
-          throw new Error('No initDataRaw available')
+          throw new Error('Открой приложение через Telegram')
         }
 
         const res = await fetch('/api/auth/validate', {
@@ -53,7 +68,8 @@ export function TMAProvider({ children }: { children: React.ReactNode }) {
         })
 
         if (!res.ok) {
-          throw new Error(`Auth failed: ${res.status}`)
+          const body = await res.text()
+          throw new Error(`Auth ${res.status}: ${body}`)
         }
 
         const data = (await res.json()) as { ok: boolean; user: TMAUser }

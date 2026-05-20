@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     .where(eq(users.tg_id, tgId))
     .limit(1)
 
-  let user = existing[0]
+  let user = existing[0] ?? null
   let isNew = false
 
   if (!user) {
@@ -72,13 +72,16 @@ export async function POST(request: Request) {
         tg_username: validated.user.username ?? null,
       })
       .returning()
-    user = inserted[0]
+    const newUser = inserted[0]
+    if (!newUser) {
+      return NextResponse.json({ error: 'failed to create user' }, { status: 500 })
+    }
+    user = newUser
     isNew = true
   } else if (
     validated.user.username &&
     validated.user.username !== user.tg_username
   ) {
-    // Обновляем username если изменился
     await db
       .update(users)
       .set({ tg_username: validated.user.username })
@@ -90,7 +93,7 @@ export async function POST(request: Request) {
     ok: true,
     user: {
       id: user.id,
-      tg_id: String(user.tg_id), // BigInt → string чтобы JSON.stringify не упал
+      tg_id: String(user.tg_id),
       tg_username: user.tg_username,
       first_name: user.first_name,
       last_name: user.last_name,

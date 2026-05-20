@@ -67,11 +67,13 @@ async function main() {
   // Валидация: проверяем что все обязательные колонки есть
   if (rows.length > 0) {
     const firstRow = rows[0]
-    const missing = REQUIRED_FIELDS.filter((f) => !(f in firstRow))
-    if (missing.length > 0) {
-      console.error(`Missing required columns: ${missing.join(', ')}`)
-      console.error(`Found columns: ${Object.keys(firstRow).join(', ')}`)
-      process.exit(1)
+    if (firstRow) {
+      const missing = REQUIRED_FIELDS.filter((f) => !(f in firstRow))
+      if (missing.length > 0) {
+        console.error(`Missing required columns: ${missing.join(', ')}`)
+        console.error(`Found columns: ${Object.keys(firstRow).join(', ')}`)
+        process.exit(1)
+      }
     }
   }
 
@@ -81,6 +83,7 @@ async function main() {
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
+    if (!row) continue
     try {
       const createdAt = new Date(row.created_at)
       if (Number.isNaN(createdAt.getTime())) {
@@ -111,7 +114,7 @@ async function main() {
     } catch (e) {
       skipped++
       errors.push({
-        row: i + 2, // +1 за header, +1 за человеческую нумерацию
+        row: i + 2,
         id: row.id,
         error: e instanceof Error ? e.message : String(e),
       })

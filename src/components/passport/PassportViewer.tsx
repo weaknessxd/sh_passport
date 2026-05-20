@@ -99,8 +99,19 @@ export function PassportViewer({
 
   return (
     <div className="flex flex-col h-screen bg-black select-none">
+      {/* Топбар с кнопкой настроек */}
+      <div className="flex items-center justify-end px-4 pt-3 pb-1">
+        <Link
+          href="/settings"
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-800 text-zinc-500"
+          aria-label="Настройки"
+        >
+          ⚙
+        </Link>
+      </div>
+
       {/* Паспорт */}
-      <div className="relative flex-1 overflow-hidden mx-4 mt-4 rounded-2xl border border-zinc-800">
+      <div className="relative flex-1 overflow-hidden mx-4 rounded-2xl border border-zinc-800">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
             key={page}

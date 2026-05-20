@@ -10,13 +10,36 @@ const bodySchema = z.object({
   initData: z.string().min(1),
   first_name: z.string().min(1).max(64).trim().optional(),
   last_name: z.string().max(64).trim().optional(),
-  email: z.string().email().optional(),
+  display_name: z.string().max(64).trim().optional(),
+  email: z.string().email().trim().toLowerCase().optional(),
   birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  region_issued: z.string().max(64).trim().optional(),
+  signature_text: z.string().max(128).trim().optional(),
+  about_owner: z.string().max(256).trim().optional(),
   password: z.string().min(4).max(128).optional(),
 })
 
 function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex')
+}
+
+function buildUserResponse(u: typeof users.$inferSelect) {
+  return {
+    id: u.id,
+    tg_id: String(u.tg_id),
+    tg_username: u.tg_username,
+    first_name: u.first_name,
+    last_name: u.last_name,
+    display_name: u.display_name,
+    email: u.email,
+    birth_date: u.birth_date,
+    region_issued: u.region_issued,
+    signature_text: u.signature_text,
+    about_owner: u.about_owner,
+    avatar_url: u.avatar_url,
+    onboarded: Boolean(u.email),
+    has_password: Boolean(u.password_hash),
+  }
 }
 
 export async function POST(request: Request) {
@@ -56,12 +79,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'user not found' }, { status: 404 })
   }
 
-  const updateData: Record<string, string> = {}
-  if (fields.first_name) updateData['first_name'] = fields.first_name
-  if (fields.last_name !== undefined) updateData['last_name'] = fields.last_name
-  if (fields.email) updateData['email'] = fields.email
-  if (fields.birth_date) updateData['birth_date'] = fields.birth_date
-  if (password) updateData['password_hash'] = hashPassword(password)
+  // Собираем обновляемые поля (только те что пришли)
+  const updateData: Partial<typeof users.$inferInsert> = {}
+  if (fields.first_name !== undefined) updateData.first_name = fields.first_name
+  if (fields.last_name !== undefined) updateData.last_name = fields.last_name || null
+  if (fields.display_name !== undefined) updateData.display_name = fields.display_name || null
+  if (fields.email !== undefined) updateData.email = fields.email
+  if (fields.birth_date !== undefined) updateData.birth_date = fields.birth_date || null
+  if (fields.region_issued !== undefined) updateData.region_issued = fields.region_issued || null
+  if (fields.signature_text !== undefined) updateData.signature_text = fields.signature_text || null
+  if (fields.about_owner !== undefined) updateData.about_owner = fields.about_owner || null
+  if (password) updateData.password_hash = hashPassword(password)
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: 'no fields to update' }, { status: 400 })
@@ -78,18 +106,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'update failed' }, { status: 500 })
   }
 
-  return NextResponse.json({
-    ok: true,
-    user: {
-      id: u.id,
-      tg_id: String(u.tg_id),
-      tg_username: u.tg_username,
-      first_name: u.first_name,
-      last_name: u.last_name,
-      display_name: u.display_name,
-      avatar_url: u.avatar_url,
-      onboarded: Boolean(u.email),
-      has_password: Boolean(u.password_hash),
-    },
-  })
+  return NextResponse.json({ ok: true, user: buildUserResponse(u) })
+}
+
+// GET — получить текущие данные профиля
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const initData = searchParams.get('initData')
+
+  if (!initData) {
+    return NextResponse.json({ error: 'initData required' }, { status: 400 })
+  }
+
+  const botToken = process.env.TG_BOT_TOKEN
+  if (!botToken) {
+    return NextResponse.json({ error: 'server misconfigured' }, { status: 500 })
+  }
+
+  let validated
+  try {
+    validated = validateInitData(initData, botToken)
+  } catch (e) {
+    if (e instanceof InitDataValidationError) {
+      return NextResponse.json({ error: e.message }, { status: 401 })
+    }
+    throw e
+  }
+
+  const tgId = BigInt(validated.user.id)
+  const existing = await db.select().from(users).where(eq(users.tg_id, tgId)).limit(1)
+  const user = existing[0] ?? null
+  if (!user) {
+    return NextResponse.json({ error: 'user not found' }, { status: 404 })
+  }
+
+  return NextResponse.json({ user: buildUserResponse(user) })
 }

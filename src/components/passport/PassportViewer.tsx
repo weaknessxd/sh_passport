@@ -8,6 +8,7 @@ import { CoverPage } from './pages/CoverPage'
 import { MainPage } from './pages/MainPage'
 import { StampsPage } from './pages/StampsPage'
 import { FinalPage } from './pages/FinalPage'
+import { FormatPage } from './pages/FormatPage'
 import { formatINV } from '@/lib/passport/identifier'
 
 type StampData = {
@@ -24,6 +25,7 @@ type UserData = {
   tg_username?: string | null
   avatar_url?: string | null
   registered_at?: string
+  birth_date?: string | null
 }
 
 type Props = {
@@ -66,6 +68,7 @@ export function PassportViewer({
           username={user.tg_username}
           avatarUrl={user.avatar_url}
           registeredAt={user.registered_at}
+          birthDate={user.birth_date}
         />
       )
     }
@@ -78,6 +81,12 @@ export function PassportViewer({
           stampsPerPage={STAMPS_PER_PAGE}
         />
       )
+    }
+    if (index === totalPages - 3) {
+      return <FormatPage variant="reminders" />
+    }
+    if (index === totalPages - 2) {
+      return <FormatPage variant="history" stamps={stamps} />
     }
     if (index === totalPages - 1) {
       return <FinalPage inv={inv} />

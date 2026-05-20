@@ -99,6 +99,7 @@ export async function POST(request: Request) {
       last_name: user.last_name,
       display_name: user.display_name,
       avatar_url: user.avatar_url,
+      birth_date: user.birth_date ?? null,
       onboarded: Boolean(user.email),
       has_password: Boolean(user.password_hash),
     },

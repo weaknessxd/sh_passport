@@ -45,6 +45,7 @@ export default function PassportPage() {
         last_name: user.last_name,
         tg_username: user.tg_username,
         avatar_url: user.avatar_url,
+        birth_date: user.birth_date,
       }}
       stamps={stamps}
     />

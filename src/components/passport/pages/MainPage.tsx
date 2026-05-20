@@ -1,5 +1,6 @@
 import { PassportField } from '../elements/PassportField'
 import { Avatar } from '../elements/Avatar'
+import { generateMRZ } from '@/lib/passport/mrz'
 
 type Props = {
   inv: string
@@ -8,10 +9,12 @@ type Props = {
   username?: string | null
   avatarUrl?: string | null
   registeredAt?: string
+  birthDate?: string | null
 }
 
-export function MainPage({ inv, firstName, lastName, username, avatarUrl, registeredAt }: Props) {
+export function MainPage({ inv, firstName, lastName, username, avatarUrl, registeredAt, birthDate }: Props) {
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || username || 'Участник'
+  const [mrzLine1, mrzLine2] = generateMRZ({ lastName, firstName, inv, birthDate })
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -57,10 +60,15 @@ export function MainPage({ inv, firstName, lastName, username, avatarUrl, regist
         </PassportField>
       )}
 
-      {/* Серия */}
-      <PassportField top="85%" left="50%" align="center">
-        <p className="text-[10px] uppercase tracking-widest text-zinc-700">Серия FB25</p>
-      </PassportField>
+      {/* MRZ */}
+      <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-800/60 bg-[#060610] px-3 py-2">
+        <p className="font-mono text-[9px] leading-[1.6] tracking-[0.12em] text-zinc-700 break-all">
+          {mrzLine1}
+        </p>
+        <p className="font-mono text-[9px] leading-[1.6] tracking-[0.12em] text-zinc-700 break-all">
+          {mrzLine2}
+        </p>
+      </div>
     </div>
   )
 }

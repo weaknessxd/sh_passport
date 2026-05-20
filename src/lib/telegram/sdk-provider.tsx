@@ -25,15 +25,30 @@ const TMAContext = createContext<TMAContextValue>({
   error: null,
 })
 
-function getRawInitData(): string | null {
+/**
+ * Извлекаем initData из всех возможных источников:
+ * 1. window.Telegram.WebApp.initData (telegram-web-app.js уже загружен)
+ * 2. URL hash: #tgWebAppData=<url-encoded-init-data>
+ */
+function getInitData(): string | null {
   if (typeof window === 'undefined') return null
+
+  // Способ 1 — через telegram-web-app.js
   try {
-    // window.Telegram.WebApp.initData — строка от Telegram
     const tg = (window as unknown as { Telegram?: { WebApp?: { initData?: string } } }).Telegram
-    return tg?.WebApp?.initData ?? null
-  } catch {
-    return null
-  }
+    const initData = tg?.WebApp?.initData
+    if (initData && initData.length > 0) return initData
+  } catch { /* ignore */ }
+
+  // Способ 2 — из URL hash (#tgWebAppData=...)
+  try {
+    const hash = window.location.hash.slice(1) // убираем #
+    const params = new URLSearchParams(hash)
+    const tgWebAppData = params.get('tgWebAppData')
+    if (tgWebAppData && tgWebAppData.length > 0) return tgWebAppData
+  } catch { /* ignore */ }
+
+  return null
 }
 
 export function TMAProvider({ children }: { children: React.ReactNode }) {
@@ -44,27 +59,16 @@ export function TMAProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function initTMA() {
       try {
-        // Динамический импорт — SDK не должен запускаться на сервере
-        const { init, retrieveLaunchParams } = await import('@telegram-apps/sdk-react')
-        init()
+        const initData = getInitData()
 
-        let initDataRaw: string | null = null
-        try {
-          const params = retrieveLaunchParams()
-          initDataRaw = params.initDataRaw ? String(params.initDataRaw) : null
-        } catch {
-          // Не в Telegram — пробуем напрямую через window
-          initDataRaw = getRawInitData()
-        }
-
-        if (!initDataRaw) {
+        if (!initData) {
           throw new Error('Открой приложение через Telegram')
         }
 
         const res = await fetch('/api/auth/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ initData: initDataRaw }),
+          body: JSON.stringify({ initData }),
         })
 
         if (!res.ok) {

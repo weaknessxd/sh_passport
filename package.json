@@ -8,10 +8,10 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio",
-    "seed": "tsx scripts/seed-presets.ts",
-    "import:orders": "tsx scripts/import-insales-orders.ts"
+    "db:migrate": "dotenv -e .env.local -- drizzle-kit migrate",
+    "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
+    "seed": "dotenv -e .env.local -- tsx scripts/seed-presets.ts",
+    "import:orders": "dotenv -e .env.local -- tsx scripts/import-insales-orders.ts"
   },
   "dependencies": {
     "@telegram-apps/sdk-react": "^3.3.9",
@@ -30,6 +30,8 @@
     "@types/node": "^20.19.41",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
+    "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.10",
     "tailwindcss": "^4",
     "tsx": "^4.22.3",

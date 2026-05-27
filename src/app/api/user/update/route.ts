@@ -14,8 +14,14 @@ const bodySchema = z.object({
   email: z.string().email().trim().toLowerCase().optional(),
   birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   region_issued: z.string().max(64).trim().optional(),
+  city: z.string().max(64).trim().optional(),
+  gender: z.enum(['М', 'Ж', 'Щ']).optional(),
   signature_text: z.string().max(128).trim().optional(),
   about_owner: z.string().max(256).trim().optional(),
+  // base64 data URL (max ~600 KB after JPEG compression)
+  avatar_url: z.string().max(900_000).optional(),
+  // SVG string for handwritten signature
+  signature_svg: z.string().max(500_000).optional(),
   password: z.string().min(4).max(128).optional(),
 })
 
@@ -87,8 +93,12 @@ export async function POST(request: Request) {
   if (fields.email !== undefined) updateData.email = fields.email
   if (fields.birth_date !== undefined) updateData.birth_date = fields.birth_date || null
   if (fields.region_issued !== undefined) updateData.region_issued = fields.region_issued || null
+  if (fields.city !== undefined) updateData.region_issued = fields.city || null
+  if (fields.gender !== undefined) updateData.gender = fields.gender || null
   if (fields.signature_text !== undefined) updateData.signature_text = fields.signature_text || null
   if (fields.about_owner !== undefined) updateData.about_owner = fields.about_owner || null
+  if (fields.avatar_url !== undefined) updateData.avatar_url = fields.avatar_url || null
+  if (fields.signature_svg !== undefined) updateData.signature_svg = fields.signature_svg || null
   if (password) updateData.password_hash = hashPassword(password)
 
   if (Object.keys(updateData).length === 0) {

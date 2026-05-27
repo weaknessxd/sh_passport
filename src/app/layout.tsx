@@ -1,7 +1,14 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import { TMAProvider } from '@/lib/telegram/sdk-provider'
+
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Паспорт Щёлочь',
@@ -14,14 +21,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" className={inter.variable}>
       <head>
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
         />
       </head>
-      <body>
+      <body className="font-inter">
         <TMAProvider>{children}</TMAProvider>
       </body>
     </html>

@@ -2,132 +2,138 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence } from 'framer-motion'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
+import { StartScreen } from '@/components/onboarding/StartScreen'
+import { InfoScreen } from '@/components/onboarding/InfoScreen'
+import { PhotoScreen } from '@/components/onboarding/PhotoScreen'
+import { SignatureScreen } from '@/components/onboarding/SignatureScreen'
+import { FinalScreen } from '@/components/onboarding/FinalScreen'
 
-type Step = 'email' | 'name'
+type Step = 'start' | 'info' | 'photo' | 'signature' | 'final'
+
+const PROGRESS: Record<Step, number> = {
+  start: 0,
+  info: 1 / 3,
+  photo: 2 / 3,
+  signature: 1,
+  final: 1,
+}
 
 export default function OnboardingPage() {
   const { initData, setUser } = useTMAUser()
   const router = useRouter()
+  const [step, setStep] = useState<Step>('start')
 
-  const [step, setStep] = useState<Step>('email')
-  const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  // Accumulated form data — saved batch at the end
+  const [savedInfo, setSavedInfo] = useState<{
+    first_name: string
+    last_name: string
+    gender: string
+    birth_date: string
+    city: string
+  } | null>(null)
+  const [savedPhoto, setSavedPhoto] = useState<string | null>(null)
 
   async function save(fields: Record<string, string>) {
-    if (!initData) return
+    if (!initData) throw new Error('No initData')
     const res = await fetch('/api/user/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ initData, ...fields }),
     })
-    if (!res.ok) {
-      const body = (await res.json()) as { error: string }
-      throw new Error(typeof body.error === 'string' ? body.error : `Ошибка ${res.status}`)
-    }
-    const data = (await res.json()) as { ok: boolean; user: Parameters<typeof setUser>[0] }
-    if (data.user) setUser(data.user)
+    const json = (await res.json()) as { ok?: boolean; user?: Parameters<typeof setUser>[0]; error?: string }
+    if (!res.ok) throw new Error(json.error ?? `Ошибка ${res.status}`)
+    if (json.user) setUser(json.user)
   }
 
-  async function handleEmail(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email.trim()) return
-    setSaving(true)
-    setError(null)
-    try {
-      await save({ email: email.trim() })
-      setStep('name')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка')
-    } finally {
-      setSaving(false)
-    }
+  // ─── Handlers ────────────────────────────────────────────────────────────
+
+  function handleStart() {
+    setStep('info')
   }
 
-  async function handleName(e: React.FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
-    setSaving(true)
-    setError(null)
-    try {
-      await save({ first_name: name.trim() })
-      router.replace('/passport')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка')
-    } finally {
-      setSaving(false)
-    }
+  async function handleInfo(data: {
+    first_name: string
+    last_name: string
+    gender: 'М' | 'Ж' | 'Щ' | ''
+    birth_date: string
+    city: string
+  }) {
+    setSavedInfo(data)
+    setStep('photo')
   }
+
+  async function handlePhoto(photoDataUrl: string) {
+    setSavedPhoto(photoDataUrl)
+    setStep('signature')
+  }
+
+  async function handleSignature(signatureSvg: string) {
+    // Save everything at once here
+    try {
+      const fields: Record<string, string> = {}
+      if (savedInfo) {
+        fields.first_name = savedInfo.first_name
+        fields.last_name = savedInfo.last_name
+        fields.gender = savedInfo.gender
+        fields.birth_date = savedInfo.birth_date
+        fields.city = savedInfo.city
+      }
+      if (savedPhoto) fields.avatar_url = savedPhoto
+      fields.signature_svg = signatureSvg
+
+      // Email was already saved during previous onboarding entry (not collected here)
+      await save(fields)
+    } catch (e) {
+      console.error('Failed to save onboarding data:', e)
+      // Continue anyway — data can be updated in settings
+    }
+    setStep('final')
+  }
+
+  async function handleEnterPassport() {
+    // Mark as onboarded — save email step was done earlier
+    // If somehow not saved yet, we just navigate
+    router.replace('/passport')
+  }
+
+  const progress = PROGRESS[step]
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6">
-      {/* Прогресс */}
-      <div className="mb-8 flex gap-2">
-        {(['email', 'name'] as Step[]).map((s, i) => (
-          <div
-            key={s}
-            className={`h-1 w-8 rounded-full transition-colors ${
-              i <= (['email', 'name'] as Step[]).indexOf(step) ? 'bg-white' : 'bg-zinc-700'
-            }`}
+    <div style={{ background: '#000000', minHeight: '100vh' }}>
+      <AnimatePresence mode="wait">
+        {step === 'start' && (
+          <StartScreen key="start" onRegister={handleStart} />
+        )}
+        {step === 'info' && (
+          <InfoScreen
+            key="info"
+            onNext={handleInfo}
+            onBack={() => setStep('start')}
+            progress={progress}
           />
-        ))}
-      </div>
-
-      {step === 'email' && (
-        <form onSubmit={handleEmail} className="w-full max-w-sm space-y-4">
-          <div>
-            <h1 className="mb-1 text-2xl font-semibold">Добро пожаловать</h1>
-            <p className="mb-6 text-sm text-zinc-400">Введи email — он нужен для получения штампов</p>
-            <label className="mb-1 block text-sm text-zinc-400" htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-zinc-400"
-            />
-          </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <button
-            type="submit"
-            disabled={saving || !email.trim()}
-            className="w-full rounded-lg bg-white py-3 font-semibold text-black disabled:opacity-40"
-          >
-            {saving ? 'Сохраняем...' : 'Далее →'}
-          </button>
-        </form>
-      )}
-
-      {step === 'name' && (
-        <form onSubmit={handleName} className="w-full max-w-sm space-y-4">
-          <div>
-            <h1 className="mb-1 text-2xl font-semibold">Как тебя зовут?</h1>
-            <p className="mb-6 text-sm text-zinc-400">Имя будет отображаться в паспорте</p>
-            <label className="mb-1 block text-sm text-zinc-400" htmlFor="name">Имя</label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Имя"
-              autoComplete="given-name"
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-zinc-400"
-            />
-          </div>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <button
-            type="submit"
-            disabled={saving || !name.trim()}
-            className="w-full rounded-lg bg-white py-3 font-semibold text-black disabled:opacity-40"
-          >
-            {saving ? 'Сохраняем...' : 'Готово →'}
-          </button>
-        </form>
-      )}
+        )}
+        {step === 'photo' && (
+          <PhotoScreen
+            key="photo"
+            onNext={handlePhoto}
+            onBack={() => setStep('info')}
+            progress={progress}
+          />
+        )}
+        {step === 'signature' && (
+          <SignatureScreen
+            key="signature"
+            onNext={handleSignature}
+            onBack={() => setStep('photo')}
+            progress={progress}
+          />
+        )}
+        {step === 'final' && (
+          <FinalScreen key="final" onEnter={handleEnterPassport} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

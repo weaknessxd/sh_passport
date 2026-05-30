@@ -24,11 +24,13 @@ export function StartScreen({ onRegister }: Props) {
         alignItems: 'center',
       }}
     >
-      {/* Logo + title group — 250px above the button (button: 35px bottom + ~50px height) */}
+      {/* Logo + title group — always centered on screen */}
       <div
         style={{
           position: 'absolute',
-          bottom: 'calc(35px + 50px + 250px)',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

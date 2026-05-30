@@ -8,9 +8,10 @@ type Props = {
   onEnter: () => void
 }
 
-// passportfinal.svg native size 345×489
-const CARD_W = 320
-const CARD_H = Math.round((CARD_W * 489) / 345) // ≈ 454
+// passportfinal.svg native size 345×489.
+// Width-limited: 10px margins on each side of the 430px base → 410px wide.
+const CARD_W = 410
+const CARD_H = Math.round((CARD_W * 489) / 345) // ≈ 581
 
 export function FinalScreen({ onEnter }: Props) {
   return (
@@ -51,13 +52,12 @@ export function FinalScreen({ onEnter }: Props) {
         ТВОЙ ПАСПОРТ<br />ГОТОВ
       </span>
 
-      {/* Passport final image — moved lower so it clears the two-line heading */}
+      {/* Passport final image — centered, 10px from side edges */}
       <div
         style={{
           position: 'absolute',
-          top: '160px',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          top: '150px',
+          left: '10px',
         }}
       >
         <Image

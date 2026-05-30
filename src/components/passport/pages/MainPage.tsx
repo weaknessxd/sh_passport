@@ -19,12 +19,14 @@ type Props = {
   onBadgesClick?: () => void
 }
 
-// Card geometry (within the 430×932 ResponsiveStage)
-const CARD_W = 400
-const CARD_H = 600
-const PAD = 22
-const PHOTO_W = 140
-const PHOTO_H = Math.round((PHOTO_W * 430) / 320) // ≈ 188
+// Card geometry (within the 430×932 ResponsiveStage). 10px screen margins.
+const CARD_W = 410
+const CARD_H = 760
+const CARD_TOP = 10
+const CARD_LEFT = 10
+const PAD = 26
+const PHOTO_W = 165
+const PHOTO_H = Math.round((PHOTO_W * 430) / 320) // ≈ 222
 
 const C_LABEL = '#8a8a8a'
 const C_VALUE = '#111111'
@@ -101,8 +103,8 @@ export function MainPage({
       <div
         style={{
           position: 'absolute',
-          top: '40px',
-          left: '15px',
+          top: `${CARD_TOP}px`,
+          left: `${CARD_LEFT}px`,
           width: `${CARD_W}px`,
           height: `${CARD_H}px`,
           background: '#D9D9D9',
@@ -236,7 +238,7 @@ export function MainPage({
             top: `${PAD + PHOTO_H + 130}px`,
             left: `${PAD}px`,
             width: `${CARD_W - PAD * 2}px`,
-            height: '150px',
+            height: '232px',
             border: '2px dashed #9a9a9a',
             borderRadius: '16px',
             background: 'transparent',

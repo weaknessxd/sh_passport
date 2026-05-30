@@ -13,9 +13,9 @@ type Props = {
   stampsPerPage?: number
 }
 
-const CARD_W = 400
-const CARD_H = 600
-const PAD = 22
+const CARD_W = 410
+const CARD_H = 760
+const PAD = 26
 
 export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props) {
   const start = pageIndex * stampsPerPage
@@ -26,8 +26,8 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props)
       <div
         style={{
           position: 'absolute',
-          top: '40px',
-          left: '15px',
+          top: '10px',
+          left: '10px',
           width: `${CARD_W}px`,
           height: `${CARD_H}px`,
           background: '#D9D9D9',

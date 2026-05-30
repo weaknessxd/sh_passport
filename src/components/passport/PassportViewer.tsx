@@ -111,6 +111,7 @@ export function PassportViewer({ user, stamps = [], initData }: Props) {
   }
 
   return (
+    <>
     <ResponsiveStage>
       {/* Pages */}
       <AnimatePresence mode="wait" initial={false}>
@@ -131,7 +132,7 @@ export function PassportViewer({ user, stamps = [], initData }: Props) {
         <div
           style={{
             position: 'absolute',
-            top: '662px',
+            top: '784px',
             left: 0,
             width: '430px',
             display: 'flex',
@@ -149,7 +150,7 @@ export function PassportViewer({ user, stamps = [], initData }: Props) {
         <div
           style={{
             position: 'absolute',
-            top: '662px',
+            top: '784px',
             left: 0,
             width: '430px',
             display: 'flex',
@@ -162,17 +163,19 @@ export function PassportViewer({ user, stamps = [], initData }: Props) {
 
       {/* Camera-style navigator */}
       <CameraNavigator pages={pagesMeta} current={page} onSelect={setPage} />
-
-      {/* Skill badges modal */}
-      <AnimatePresence>
-        {badgesOpen && (
-          <SkillBadgesModal
-            initial={badges}
-            onSave={saveBadges}
-            onClose={() => setBadgesOpen(false)}
-          />
-        )}
-      </AnimatePresence>
     </ResponsiveStage>
+
+    {/* Skill badges modal — rendered outside the scaled stage so it stays
+        fixed to the real viewport (no flicker, true screen margins). */}
+    <AnimatePresence>
+      {badgesOpen && (
+        <SkillBadgesModal
+          initial={badges}
+          onSave={saveBadges}
+          onClose={() => setBadgesOpen(false)}
+        />
+      )}
+    </AnimatePresence>
+    </>
   )
 }

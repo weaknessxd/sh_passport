@@ -34,53 +34,39 @@ export function SkillBadgesModal({ initial, onSave, onClose }: Props) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       onClick={onClose}
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.7)',
+        background: 'rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
         display: 'flex',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         justifyContent: 'center',
         zIndex: 100,
+        padding: '0 15px',
       }}
     >
       <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 320, damping: 34 }}
+        initial={{ scale: 0.94, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.94, opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '500px',
+          maxWidth: '460px',
           background: '#D9D9D9',
-          borderTopLeftRadius: '28px',
-          borderTopRightRadius: '28px',
-          padding: '24px 22px 32px',
+          borderRadius: '24px',
+          padding: '26px 22px 28px',
         }}
       >
-        <p
-          style={{
-            fontFamily: 'var(--font-inter), sans-serif',
-            fontWeight: 800,
-            fontSize: '22px',
-            letterSpacing: '-0.04em',
-            color: '#111',
-            marginBottom: '4px',
-          }}
-        >
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontWeight: 800, fontSize: '22px', letterSpacing: '-0.04em', color: '#111', marginBottom: '4px' }}>
           Твои навыки
         </p>
-        <p
-          style={{
-            fontFamily: 'var(--font-inter), sans-serif',
-            fontWeight: 500,
-            fontSize: '13px',
-            color: '#7a7a7a',
-            marginBottom: '18px',
-          }}
-        >
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontWeight: 500, fontSize: '13px', color: '#7a7a7a', marginBottom: '18px' }}>
           Выбери до {MAX_BADGES} ({selected.length}/{MAX_BADGES})
         </p>
 

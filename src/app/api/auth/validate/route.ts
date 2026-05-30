@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       display_name: user.display_name,
       avatar_url: user.avatar_url,
       birth_date: user.birth_date ?? null,
-      onboarded: Boolean(user.email),
+      onboarded: Boolean(user.onboarded),
     },
     is_new: isNew,
   })

@@ -56,11 +56,13 @@ export function ResponsiveStage({ children }: { children: React.ReactNode }) {
         style={{
           width: `${BASE_W}px`,
           height: `${BASE_H}px`,
-          transform: `scale(${scale})`,
-          transformOrigin: 'center center',
+          // `zoom` (not transform) scales the *layout* box too, so it always
+          // fits the viewport — nothing overflows, so focusing an input can't
+          // scroll the page up.
+          zoom: scale,
           position: 'relative',
           flexShrink: 0,
-        }}
+        } as React.CSSProperties}
       >
         {children}
       </div>

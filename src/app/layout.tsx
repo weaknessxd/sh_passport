@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { Inter } from 'next/font/google'
 import './globals.css'
@@ -13,6 +13,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Паспорт Щёлочь',
   description: 'Цифровой паспорт участника комьюнити Щёлочь',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  // keyboard resizes the layout (no visual-viewport pan / jump up)
+  interactiveWidget: 'resizes-content',
 }
 
 export default function RootLayout({

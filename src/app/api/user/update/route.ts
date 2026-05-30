@@ -18,6 +18,7 @@ const bodySchema = z.object({
   gender: z.enum(['М', 'Ж', 'Щ']).optional(),
   theme: z.string().max(64).trim().optional(),
   skill_badges: z.array(z.string().max(40)).max(6).optional(),
+  onboarded: z.boolean().optional(),
   signature_text: z.string().max(128).trim().optional(),
   about_owner: z.string().max(256).trim().optional(),
   // base64 data URL (max ~600 KB after JPEG compression)
@@ -51,7 +52,7 @@ function buildUserResponse(u: typeof users.$inferSelect) {
     about_owner: u.about_owner,
     avatar_url: u.avatar_url,
     registered_at: u.registered_at ? u.registered_at.toISOString() : null,
-    onboarded: Boolean(u.email),
+    onboarded: Boolean(u.onboarded),
     has_password: Boolean(u.password_hash),
   }
 }
@@ -105,6 +106,7 @@ export async function POST(request: Request) {
   if (fields.gender !== undefined) updateData.gender = fields.gender || null
   if (fields.theme !== undefined) updateData.theme = fields.theme || null
   if (fields.skill_badges !== undefined) updateData.skill_badges = fields.skill_badges
+  if (fields.onboarded !== undefined) updateData.onboarded = fields.onboarded
   if (fields.signature_text !== undefined) updateData.signature_text = fields.signature_text || null
   if (fields.about_owner !== undefined) updateData.about_owner = fields.about_owner || null
   if (fields.avatar_url !== undefined) updateData.avatar_url = fields.avatar_url || null

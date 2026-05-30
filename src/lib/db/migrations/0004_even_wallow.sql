@@ -1,0 +1,1 @@
+ALTER TABLE "passport"."users" ADD COLUMN "onboarded" boolean DEFAULT false;

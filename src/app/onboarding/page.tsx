@@ -36,7 +36,7 @@ export default function OnboardingPage() {
   } | null>(null)
   const [savedPhoto, setSavedPhoto] = useState<string | null>(null)
 
-  async function save(fields: Record<string, string>) {
+  async function save(fields: Record<string, unknown>) {
     if (!initData) throw new Error('No initData')
     const res = await fetch('/api/user/update', {
       method: 'POST',
@@ -71,9 +71,9 @@ export default function OnboardingPage() {
   }
 
   async function handleSignature(signatureSvg: string) {
-    // Save everything at once here
+    // Save everything at once + mark onboarding complete
     try {
-      const fields: Record<string, string> = {}
+      const fields: Record<string, unknown> = { onboarded: true }
       if (savedInfo) {
         fields.first_name = savedInfo.first_name
         fields.last_name = savedInfo.last_name
@@ -84,7 +84,6 @@ export default function OnboardingPage() {
       if (savedPhoto) fields.avatar_url = savedPhoto
       fields.signature_svg = signatureSvg
 
-      // Email was already saved during previous onboarding entry (not collected here)
       await save(fields)
     } catch (e) {
       console.error('Failed to save onboarding data:', e)
@@ -93,9 +92,7 @@ export default function OnboardingPage() {
     setStep('final')
   }
 
-  async function handleEnterPassport() {
-    // Mark as onboarded — save email step was done earlier
-    // If somehow not saved yet, we just navigate
+  function handleEnterPassport() {
     router.replace('/passport')
   }
 

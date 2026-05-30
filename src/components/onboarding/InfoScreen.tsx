@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { InputField } from '@/components/ui/InputField'
+import { DateField } from '@/components/ui/DateField'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 
 type FormData = {
@@ -177,11 +178,10 @@ export function InfoScreen({ onNext, onBack, progress }: Props) {
             highlight={highlightEmpty && form.gender === ''}
           />
 
-          <InputField
-            placeholder="Дата рождения"
+          <DateField
+            placeholder="Дата рождения (ДД.ММ.ГГГГ)"
             value={form.birth_date}
             onChange={set('birth_date')}
-            type="date"
             highlightEmpty={highlightEmpty && form.birth_date === ''}
           />
           <InputField

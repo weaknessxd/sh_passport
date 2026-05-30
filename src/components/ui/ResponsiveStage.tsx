@@ -8,17 +8,14 @@ export const BASE_H = 932
 
 /**
  * Scales a fixed BASE_W×BASE_H design to fit any screen while preserving
- * proportions, and keeps the UI pinned when the on-screen keyboard opens.
+ * proportions, and keeps the UI pinned when the iOS keyboard opens.
  *
- * Three problems handled:
- *  1. Proportional fit — via `zoom` (scales the layout box, so nothing
- *     overflows and the browser can't scroll the page).
- *  2. Keyboard shrinking the scale — we ignore height *decreases* that happen
- *     without a width change (the keyboard) so the UI doesn't shrink.
- *  3. iOS pushing the screen up on input focus — iOS WKWebView ignores
- *     `interactive-widget` and either scrolls the document or pans the visual
- *     viewport. We reset document scroll and translate the stage by the visual
- *     viewport offset so the content stays put.
+ * iOS (Telegram WKWebView) ignores `interactive-widget` and pans the page up
+ * on input focus. We defeat that by sizing/positioning the stage to the
+ * *visual viewport* (window.visualViewport): it always covers exactly the
+ * visible area, follows any pan via offsetTop, and top-anchors its content so
+ * the top of the form stays put while the keyboard simply overlaps the bottom.
+ * We also keep resetting scroll during iOS's focus animation.
  */
 export function ResponsiveStage({ children }: { children: React.ReactNode }) {
   const [scale, setScale] = useState(1)
@@ -31,36 +28,51 @@ export function ResponsiveStage({ children }: { children: React.ReactNode }) {
     function updateScale() {
       const w = window.innerWidth
       let h = window.innerHeight
-      // Same width + smaller height ⇒ keyboard opened. Keep previous height.
+      // Same width + smaller height ⇒ keyboard. Keep previous height.
       if (w === dims.current.w && h < dims.current.h) h = dims.current.h
       dims.current = { w, h }
       setScale(Math.min(w / BASE_W, h / BASE_H))
     }
 
-    function pin() {
+    function syncViewport() {
       const el = outerRef.current
       if (!el) return
-      const offsetTop = vv ? vv.offsetTop : 0
-      el.style.transform = offsetTop ? `translateY(${offsetTop}px)` : 'none'
+      if (vv) {
+        el.style.top = `${vv.offsetTop}px`
+        el.style.left = `${vv.offsetLeft}px`
+        el.style.width = `${vv.width}px`
+        el.style.height = `${vv.height}px`
+      }
+      // Cancel any programmatic scroll iOS performs to reveal the input.
+      if (el.scrollTop !== 0) el.scrollTop = 0
+      if (el.scrollLeft !== 0) el.scrollLeft = 0
+      if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0)
     }
 
-    function resetScroll() {
-      if (window.scrollY !== 0 || window.scrollX !== 0) window.scrollTo(0, 0)
-      pin()
+    // iOS animates the focus scroll over ~300ms — keep correcting for a bit.
+    let rafId = 0
+    let until = 0
+    function chase() {
+      syncViewport()
+      if (performance.now() < until) rafId = requestAnimationFrame(chase)
+    }
+    function onFocusIn() {
+      until = performance.now() + 500
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(chase)
     }
 
     updateScale()
-    pin()
+    syncViewport()
 
     window.addEventListener('resize', updateScale)
     window.addEventListener('orientationchange', updateScale)
-    window.addEventListener('scroll', resetScroll, { passive: true })
-    window.addEventListener('focusin', resetScroll)
-    vv?.addEventListener('resize', pin)
-    vv?.addEventListener('scroll', pin)
+    window.addEventListener('scroll', syncViewport, { passive: true })
+    window.addEventListener('focusin', onFocusIn)
+    window.addEventListener('focusout', syncViewport)
+    vv?.addEventListener('resize', syncViewport)
+    vv?.addEventListener('scroll', syncViewport)
 
-    // Lock document scroll while the stage is mounted (restored on unmount so
-    // scrollable pages like /settings are unaffected).
     const html = document.documentElement
     const body = document.body
     const prevHtmlOverflow = html.style.overflow
@@ -69,12 +81,14 @@ export function ResponsiveStage({ children }: { children: React.ReactNode }) {
     body.style.overflow = 'hidden'
 
     return () => {
+      cancelAnimationFrame(rafId)
       window.removeEventListener('resize', updateScale)
       window.removeEventListener('orientationchange', updateScale)
-      window.removeEventListener('scroll', resetScroll)
-      window.removeEventListener('focusin', resetScroll)
-      vv?.removeEventListener('resize', pin)
-      vv?.removeEventListener('scroll', pin)
+      window.removeEventListener('scroll', syncViewport)
+      window.removeEventListener('focusin', onFocusIn)
+      window.removeEventListener('focusout', syncViewport)
+      vv?.removeEventListener('resize', syncViewport)
+      vv?.removeEventListener('scroll', syncViewport)
       html.style.overflow = prevHtmlOverflow
       body.style.overflow = prevBodyOverflow
     }
@@ -85,10 +99,13 @@ export function ResponsiveStage({ children }: { children: React.ReactNode }) {
       ref={outerRef}
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
         background: '#000000',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
         overflow: 'hidden',
       }}
@@ -97,7 +114,7 @@ export function ResponsiveStage({ children }: { children: React.ReactNode }) {
         style={{
           width: `${BASE_W}px`,
           height: `${BASE_H}px`,
-          // `zoom` scales the layout box too, so it always fits the viewport.
+          // `zoom` scales the layout box, so it fits the viewport width/height.
           zoom: scale,
           position: 'relative',
           flexShrink: 0,

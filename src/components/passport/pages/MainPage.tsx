@@ -19,14 +19,14 @@ type Props = {
   onBadgesClick?: () => void
 }
 
-// Card geometry (within the 430×932 ResponsiveStage). 10px screen margins.
-const CARD_W = 410
+// Card geometry (within the 430×932 ResponsiveStage). 4px screen margins.
+const CARD_W = 422
 const CARD_H = 760
 const CARD_TOP = 10
-const CARD_LEFT = 10
+const CARD_LEFT = 4
 const PAD = 26
-const PHOTO_W = 165
-const PHOTO_H = Math.round((PHOTO_W * 430) / 320) // ≈ 222
+const PHOTO_W = 168
+const PHOTO_H = Math.round((PHOTO_W * 430) / 320) // ≈ 226
 
 const C_LABEL = '#8a8a8a'
 const C_VALUE = '#111111'
@@ -71,6 +71,10 @@ function Value({ children, style }: { children: React.ReactNode; style?: React.C
         letterSpacing: '-0.03em',
         display: 'block',
         lineHeight: 1.15,
+        // never wrap — keeps every row a predictable height so nothing collides
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
         ...style,
       }}
     >
@@ -183,11 +187,11 @@ export function MainPage({
 
           <div style={{ height: '10px' }} />
           <div style={{ display: 'flex', gap: '8px' }}>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <Label>фамилия</Label>
               <Value>{lastName || '—'}</Value>
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <Label>пол</Label>
               <Value>{gender ? (GENDER_LABELS[gender] ?? gender) : '—'}</Value>
             </div>
@@ -195,11 +199,11 @@ export function MainPage({
 
           <div style={{ height: '10px' }} />
           <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <Label>дата рождения</Label>
               <Value style={{ fontSize: '15px' }}>{fmtBirth(birthDate)}</Value>
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <Label>подпись</Label>
               <div style={{ height: '26px', borderBottom: '1px solid #9a9a9a', position: 'relative' }}>
                 {signatureSvg && (
@@ -216,11 +220,11 @@ export function MainPage({
         {/* Middle band — выдан / тема / дата выдачи */}
         <div style={{ position: 'absolute', top: `${PAD + PHOTO_H + 28}px`, left: `${PAD}px`, width: `${CARD_W - PAD * 2}px` }}>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <Label>выдан</Label>
               <Value style={{ fontSize: '19px' }}>ГУ МСД Щёлочь</Value>
             </div>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <Label>тема</Label>
               <Value style={{ fontSize: '19px' }}>{theme || 'Цифровой эскапизм'}</Value>
             </div>
@@ -238,7 +242,7 @@ export function MainPage({
             top: `${PAD + PHOTO_H + 130}px`,
             left: `${PAD}px`,
             width: `${CARD_W - PAD * 2}px`,
-            height: '232px',
+            height: '300px',
             border: '2px dashed #9a9a9a',
             borderRadius: '16px',
             background: 'transparent',

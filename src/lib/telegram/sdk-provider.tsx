@@ -56,6 +56,22 @@ export function TMAProvider({ children }: { children: React.ReactNode }) {
   const [initData, setInitData] = useState<string | null>(null)
 
   useEffect(() => {
+    // Expand the Mini App to full height (otherwise Telegram opens it at
+    // ~half height, which shrinks the whole scaled stage and leaves big side
+    // margins). Also signal readiness and disable vertical swipe-to-close.
+    try {
+      const tg = (window as unknown as {
+        Telegram?: { WebApp?: {
+          ready?: () => void
+          expand?: () => void
+          disableVerticalSwipes?: () => void
+        } }
+      }).Telegram
+      tg?.WebApp?.ready?.()
+      tg?.WebApp?.expand?.()
+      tg?.WebApp?.disableVerticalSwipes?.()
+    } catch { /* ignore */ }
+
     async function initTMA() {
       try {
         const data = getInitData()

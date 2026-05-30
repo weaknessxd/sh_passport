@@ -32,16 +32,10 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
-      react-image-crop:
-        specifier: ^11.0.10
-        version: 11.0.10(react@19.2.4)
       zod:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@netlify/plugin-nextjs':
-        specifier: ^5.15.11
-        version: 5.15.11
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.0
@@ -706,10 +700,6 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@netlify/plugin-nextjs@5.15.11':
-    resolution: {integrity: sha512-cx7yoJFYDBFRecGqJaEUuvnHvU+vs9ISn7DUXyijPheaqtbyRy4+z7Mjre9swEJ19ItVeFhuGuXUkl6X5nfJeA==}
-    engines: {node: '>=18.0.0'}
-
   '@next/env@16.2.6':
     resolution: {integrity: sha512-gd8HoHN4ufj73WmR3JmVolrpJR47ILK6LouP5xElPglaVxir6e1a7VzvTvDWkOoPXT9rkkTzyCxBu4yeZfZwcw==}
 
@@ -1240,11 +1230,6 @@ packages:
     peerDependencies:
       react: ^19.2.4
 
-  react-image-crop@11.0.10:
-    resolution: {integrity: sha512-+5FfDXUgYLLqBh1Y/uQhIycpHCbXkI50a+nbfkB1C0xXXUTwkisHDo2QCB1SQJyHCqIuia4FeyReqXuMDKWQTQ==}
-    peerDependencies:
-      react: '>=16.13.1'
-
   react@19.2.4:
     resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
     engines: {node: '>=0.10.0'}
@@ -1702,8 +1687,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@netlify/plugin-nextjs@5.15.11': {}
-
   '@next/env@16.2.6': {}
 
   '@next/swc-darwin-arm64@16.2.6':
@@ -2140,10 +2123,6 @@ snapshots:
     dependencies:
       react: 19.2.4
       scheduler: 0.27.0
-
-  react-image-crop@11.0.10(react@19.2.4):
-    dependencies:
-      react: 19.2.4
 
   react@19.2.4: {}
 

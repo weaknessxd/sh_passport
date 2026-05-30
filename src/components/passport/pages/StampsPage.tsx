@@ -1,4 +1,4 @@
-import { Stamp } from '../elements/Stamp'
+'use client'
 
 type StampData = {
   id: number
@@ -8,54 +8,110 @@ type StampData = {
 }
 
 type Props = {
-  stamps: StampData[]
-  pageIndex: number // 0-based среди страниц со штампами
+  stamps?: StampData[]
+  pageIndex: number
   stampsPerPage?: number
 }
 
-export function StampsPage({ stamps, pageIndex, stampsPerPage = 6 }: Props) {
-  const start = pageIndex * stampsPerPage
-  const pageStamps = stamps.slice(start, start + stampsPerPage)
+const CARD_W = 400
+const CARD_H = 600
+const PAD = 22
 
-  // Пустые слоты до stampsPerPage
-  const slots = Array.from({ length: stampsPerPage }, (_, i) => pageStamps[i] ?? null)
+export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props) {
+  const start = pageIndex * stampsPerPage
+  const slots = Array.from({ length: stampsPerPage }, (_, i) => stamps[start + i] ?? null)
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
-      <div className="absolute inset-0 bg-[#0b0b16]" />
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: '40px',
+          left: '15px',
+          width: `${CARD_W}px`,
+          height: `${CARD_H}px`,
+          background: '#D9D9D9',
+          borderRadius: '28px',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Creatures watermark — bottom */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/icons/creatures.svg"
+          alt=""
+          aria-hidden
+          style={{
+            position: 'absolute',
+            bottom: '40px',
+            left: '0',
+            width: '100%',
+            filter: 'brightness(0) opacity(0.07)',
+            pointerEvents: 'none',
+          }}
+        />
 
-      <div className="absolute top-2 right-2 rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">
-        PLACEHOLDER
-      </div>
-
-      <div className="absolute top-6 left-0 right-0 text-center">
-        <p className="text-[10px] uppercase tracking-widest text-zinc-600">Штампы</p>
-      </div>
-
-      <div className="absolute inset-x-0 top-14 bottom-12 grid grid-cols-3 gap-4 px-6 content-start">
-        {slots.map((stamp, i) =>
-          stamp ? (
-            <div key={stamp.id} className="flex justify-center">
-              <Stamp
-                name={stamp.name}
-                icon={stamp.icon ?? undefined}
-                issuedAt={stamp.issued_at ?? undefined}
-              />
+        {/* 2×4 grid of stamp slots */}
+        <div
+          style={{
+            position: 'absolute',
+            top: `${PAD}px`,
+            left: `${PAD}px`,
+            width: `${CARD_W - PAD * 2}px`,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '16px',
+          }}
+        >
+          {slots.map((stamp, i) => (
+            <div
+              key={i}
+              style={{
+                aspectRatio: '160 / 96',
+                border: '1.5px dashed #9a9a9a',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              {stamp && (
+                <div style={{ textAlign: 'center', padding: '6px' }}>
+                  <div style={{ fontSize: '26px', lineHeight: 1 }}>{stamp.icon ?? '★'}</div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-inter), sans-serif',
+                      fontWeight: 700,
+                      fontSize: '11px',
+                      letterSpacing: '-0.03em',
+                      color: '#111',
+                      marginTop: '4px',
+                    }}
+                  >
+                    {stamp.name}
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div key={`empty-${i}`} className="flex justify-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-zinc-800">
-                <span className="text-zinc-800 text-lg">+</span>
-              </div>
-            </div>
-          )
-        )}
-      </div>
+          ))}
+        </div>
 
-      <div className="absolute bottom-4 left-0 right-0 text-center">
-        <p className="text-[10px] text-zinc-700">
-          {stamps.length} из {pageIndex * stampsPerPage + stampsPerPage} слотов заполнено
-        </p>
+        {/* Page number in card */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '14px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontFamily: 'var(--font-inter), sans-serif',
+            fontWeight: 700,
+            fontSize: '12px',
+            color: '#7a7a7a',
+          }}
+        >
+          {pageIndex + 1}
+        </div>
       </div>
     </div>
   )

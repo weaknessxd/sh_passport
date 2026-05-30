@@ -8,6 +8,10 @@ type Props = {
   onEnter: () => void
 }
 
+// passportfinal.svg native size 345×489
+const CARD_W = 320
+const CARD_H = Math.round((CARD_W * 489) / 345) // ≈ 454
+
 export function FinalScreen({ onEnter }: Props) {
   return (
     <motion.div
@@ -16,7 +20,7 @@ export function FinalScreen({ onEnter }: Props) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         background: '#000000',
         display: 'flex',
@@ -36,20 +40,22 @@ export function FinalScreen({ onEnter }: Props) {
           fontStyle: 'italic',
           fontSize: '40px',
           letterSpacing: '-0.12em',
+          wordSpacing: '0.35em',
+          lineHeight: 1,
           color: '#ffffff',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
           textAlign: 'center',
         }}
       >
-        ТВОЙ ПАСПОРТ ГОТОВ
+        ТВОЙ ПАСПОРТ<br />ГОТОВ
       </span>
 
-      {/* Passport final image — 35px below heading */}
+      {/* Passport final image — moved lower so it clears the two-line heading */}
       <div
         style={{
           position: 'absolute',
-          top: `${40 + 56 + 35}px`, // heading top + approx heading height + gap
+          top: '160px',
           left: '50%',
           transform: 'translateX(-50%)',
         }}
@@ -57,8 +63,8 @@ export function FinalScreen({ onEnter }: Props) {
         <Image
           src="/icons/passportfinal.svg"
           alt="Паспорт готов"
-          width={320}
-          height={320}
+          width={CARD_W}
+          height={CARD_H}
           style={{ display: 'block' }}
         />
       </div>

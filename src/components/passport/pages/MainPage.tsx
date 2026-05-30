@@ -1,73 +1,297 @@
-import { PassportField } from '../elements/PassportField'
-import { Avatar } from '../elements/Avatar'
-import { generateMRZ } from '@/lib/passport/mrz'
+'use client'
+
+import { formatPassportNumber } from '@/lib/passport/identifier'
+import { generateCardMRZ } from '@/lib/passport/mrz'
 
 type Props = {
-  inv: string
+  userId: number
+  nick?: string | null
   firstName?: string | null
   lastName?: string | null
-  username?: string | null
-  avatarUrl?: string | null
-  registeredAt?: string
+  gender?: string | null
   birthDate?: string | null
+  city?: string | null
+  theme?: string | null
+  avatarUrl?: string | null
+  signatureSvg?: string | null
+  registeredAt?: string | null
+  badges?: string[]
+  onBadgesClick?: () => void
 }
 
-export function MainPage({ inv, firstName, lastName, username, avatarUrl, registeredAt, birthDate }: Props) {
-  const fullName = [firstName, lastName].filter(Boolean).join(' ') || username || 'Участник'
-  const [mrzLine1, mrzLine2] = generateMRZ({ lastName, firstName, inv, birthDate })
+// Card geometry (within the 430×932 ResponsiveStage)
+const CARD_W = 400
+const CARD_H = 600
+const PAD = 22
+const PHOTO_W = 140
+const PHOTO_H = Math.round((PHOTO_W * 430) / 320) // ≈ 188
+
+const C_LABEL = '#8a8a8a'
+const C_VALUE = '#111111'
+const C_RED = '#ED1C24'
+
+const GENDER_LABELS: Record<string, string> = { М: 'мужской', Ж: 'женский', Щ: 'щёлочь' }
+
+function fmtBirth(iso?: string | null): string {
+  if (!iso) return '—'
+  const [y, m, d] = iso.split('-')
+  if (!y || !m || !d) return iso
+  return `${d}.${m}.${y}`
+}
+
+function Label({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <span
+      style={{
+        fontFamily: 'var(--font-inter), sans-serif',
+        fontWeight: 500,
+        fontSize: '10px',
+        color: C_LABEL,
+        letterSpacing: '-0.02em',
+        display: 'block',
+        lineHeight: 1.2,
+        ...style,
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function Value({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <span
+      style={{
+        fontFamily: 'var(--font-inter), sans-serif',
+        fontWeight: 800,
+        fontSize: '17px',
+        color: C_VALUE,
+        letterSpacing: '-0.03em',
+        display: 'block',
+        lineHeight: 1.15,
+        ...style,
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function prepareSignatureSvg(svg: string): string {
+  return svg
+    .replace(/stroke="white"/g, 'stroke="#1a1a1a"')
+    .replace(/stroke="#fff(?:fff)?"/gi, 'stroke="#1a1a1a"')
+    .replace(/<svg([^>]*?)\swidth="[^"]*"/, '<svg$1 width="100%"')
+    .replace(/<svg([^>]*?)\sheight="[^"]*"/, '<svg$1 height="100%"')
+}
+
+export function MainPage({
+  userId, nick, firstName, lastName, gender, birthDate, city, theme,
+  avatarUrl, signatureSvg, registeredAt, badges = [], onBadgesClick,
+}: Props) {
+  const num = formatPassportNumber(userId, registeredAt)
+  const mrz = generateCardMRZ({ nick, lastName, firstName, city, birthDate, number: userId })
+
+  const rightX = PAD + PHOTO_W + 16
+  const rightW = CARD_W - PAD - rightX
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
-      <div className="absolute inset-0 bg-[#0a0a14]" />
+    <div style={{ position: 'absolute', inset: 0 }}>
+      {/* Card */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '40px',
+          left: '15px',
+          width: `${CARD_W}px`,
+          height: `${CARD_H}px`,
+          background: '#D9D9D9',
+          borderRadius: '28px',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Watermark */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/icons/bear.svg"
+          alt=""
+          aria-hidden
+          style={{
+            position: 'absolute',
+            bottom: '110px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '92%',
+            filter: 'brightness(0) opacity(0.06)',
+            pointerEvents: 'none',
+          }}
+        />
 
-      <div className="absolute top-2 right-2 rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">
-        PLACEHOLDER
-      </div>
+        {/* Photo */}
+        <div
+          style={{
+            position: 'absolute',
+            top: `${PAD}px`,
+            left: `${PAD}px`,
+            width: `${PHOTO_W}px`,
+            height: `${PHOTO_H}px`,
+            borderRadius: '10px',
+            overflow: 'hidden',
+            background: '#bcbcbc',
+          }}
+        >
+          {avatarUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt="Фото"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          )}
+        </div>
 
-      {/* Аватар */}
-      <PassportField top="10%" left="50%" align="center">
-        <Avatar url={avatarUrl} name={fullName} size={88} />
-      </PassportField>
+        {/* Red passport number — top-right */}
+        <div
+          style={{
+            position: 'absolute',
+            top: `${PAD}px`,
+            right: `${PAD}px`,
+            textAlign: 'right',
+            fontFamily: 'var(--font-inter), sans-serif',
+            fontWeight: 900,
+            fontStyle: 'italic',
+            fontSize: '24px',
+            lineHeight: 0.95,
+            letterSpacing: '-0.04em',
+            color: C_RED,
+          }}
+        >
+          <div>{num.top}</div>
+          <div>{num.bottom}</div>
+        </div>
 
-      {/* Имя */}
-      <PassportField top="38%" left="50%" align="center">
-        <p className="text-lg font-semibold text-white">{fullName}</p>
-        {username && (
-          <p className="text-center text-xs text-zinc-400">@{username}</p>
-        )}
-      </PassportField>
+        {/* Right column fields */}
+        <div style={{ position: 'absolute', top: `${PAD + 44}px`, left: `${rightX}px`, width: `${rightW}px` }}>
+          <Label>ник</Label>
+          <Value>{nick || '—'}</Value>
 
-      {/* Разделитель */}
-      <PassportField top="52%" left="8%">
-        <div className="h-px w-[84vw] max-w-[320px] bg-zinc-800" />
-      </PassportField>
+          <div style={{ height: '10px' }} />
+          <Label>имя</Label>
+          <Value>{firstName || '—'}</Value>
 
-      {/* ИНВ */}
-      <PassportField top="56%" left="8%">
-        <p className="text-[10px] uppercase tracking-widest text-zinc-500">ИНВ</p>
-        <p className="font-mono text-xl font-bold tracking-wider text-[#e94560]">{inv}</p>
-      </PassportField>
+          <div style={{ height: '10px' }} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ flex: 1 }}>
+              <Label>фамилия</Label>
+              <Value>{lastName || '—'}</Value>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Label>пол</Label>
+              <Value>{gender ? (GENDER_LABELS[gender] ?? gender) : '—'}</Value>
+            </div>
+          </div>
 
-      {/* Дата регистрации */}
-      {registeredAt && (
-        <PassportField top="72%" left="8%">
-          <p className="text-[10px] uppercase tracking-widest text-zinc-500">Дата регистрации</p>
-          <p className="text-sm text-zinc-300">
-            {new Date(registeredAt).toLocaleDateString('ru', {
-              day: '2-digit', month: 'long', year: 'numeric',
-            })}
-          </p>
-        </PassportField>
-      )}
+          <div style={{ height: '10px' }} />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <Label>дата рождения</Label>
+              <Value style={{ fontSize: '15px' }}>{fmtBirth(birthDate)}</Value>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Label>подпись</Label>
+              <div style={{ height: '26px', borderBottom: '1px solid #9a9a9a', position: 'relative' }}>
+                {signatureSvg && (
+                  <div
+                    style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
+                    dangerouslySetInnerHTML={{ __html: prepareSignatureSvg(signatureSvg) }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
-      {/* MRZ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-800/60 bg-[#060610] px-3 py-2">
-        <p className="font-mono text-[9px] leading-[1.6] tracking-[0.12em] text-zinc-700 break-all">
-          {mrzLine1}
-        </p>
-        <p className="font-mono text-[9px] leading-[1.6] tracking-[0.12em] text-zinc-700 break-all">
-          {mrzLine2}
-        </p>
+        {/* Middle band — выдан / тема / дата выдачи */}
+        <div style={{ position: 'absolute', top: `${PAD + PHOTO_H + 28}px`, left: `${PAD}px`, width: `${CARD_W - PAD * 2}px` }}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <Label>выдан</Label>
+              <Value style={{ fontSize: '19px' }}>ГУ МСД Щёлочь</Value>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Label>тема</Label>
+              <Value style={{ fontSize: '19px' }}>{theme || 'Цифровой эскапизм'}</Value>
+            </div>
+          </div>
+          <div style={{ height: '14px' }} />
+          <Label>дата выдачи</Label>
+          <Value style={{ fontSize: '19px' }}>31.12.2999</Value>
+        </div>
+
+        {/* Skill badges area — tappable */}
+        <button
+          onClick={onBadgesClick}
+          style={{
+            position: 'absolute',
+            top: `${PAD + PHOTO_H + 130}px`,
+            left: `${PAD}px`,
+            width: `${CARD_W - PAD * 2}px`,
+            height: '150px',
+            border: '2px dashed #9a9a9a',
+            borderRadius: '16px',
+            background: 'transparent',
+            cursor: 'pointer',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            padding: '12px',
+          }}
+        >
+          {badges.length === 0 ? (
+            <span style={{ fontSize: '40px', fontWeight: 300, color: '#7a7a7a', lineHeight: 1 }}>+</span>
+          ) : (
+            badges.map((b) => (
+              <span
+                key={b}
+                style={{
+                  fontFamily: 'var(--font-inter), sans-serif',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  letterSpacing: '-0.03em',
+                  color: '#111',
+                  background: '#c4c4c4',
+                  borderRadius: '999px',
+                  padding: '6px 12px',
+                }}
+              >
+                {b}
+              </span>
+            ))
+          )}
+        </button>
+
+        {/* MRZ strip */}
+        <div style={{ position: 'absolute', bottom: '16px', left: `${PAD}px`, width: `${CARD_W - PAD * 2}px` }}>
+          {mrz.map((line, i) => (
+            <div
+              key={i}
+              style={{
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: '8px',
+                letterSpacing: '0.18em',
+                color: '#9a9a9a',
+                lineHeight: 1.5,
+                textAlign: i === 2 ? 'center' : 'left',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+              }}
+            >
+              {line}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
+import { Button } from '@/components/ui/Button'
+import { InputField } from '@/components/ui/InputField'
 
 type State =
   | { status: 'idle' }
@@ -19,32 +20,22 @@ export default function StampsClaimPage() {
   const [email, setEmail] = useState('')
   const [state, setState] = useState<State>({ status: 'idle' })
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit() {
     if (!orderId.trim() || !email.trim() || !initData) return
-
     setState({ status: 'loading' })
 
     try {
       const res = await fetch('/api/stamps/claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          initData,
-          order_id: orderId.trim(),
-          email: email.trim(),
-        }),
+        body: JSON.stringify({ initData, order_id: orderId.trim(), email: email.trim() }),
       })
-
-      const data = (await res.json()) as
-        | { ok: true; stamp: { name: string } }
-        | { error: string }
+      const data = (await res.json()) as { ok: true; stamp: { name: string } } | { error: string }
 
       if (!res.ok || !('ok' in data)) {
         setState({ status: 'error', message: 'error' in data ? data.error : `Ошибка ${res.status}` })
         return
       }
-
       setState({ status: 'success', stampName: data.stamp.name })
     } catch {
       setState({ status: 'error', message: 'Нет соединения. Попробуй ещё раз.' })
@@ -53,92 +44,96 @@ export default function StampsClaimPage() {
 
   if (state.status === 'success') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full border-2 border-[#e94560] text-5xl">
+      <div style={wrap}>
+        <div
+          style={{
+            width: '96px', height: '96px', borderRadius: '999px',
+            border: '2px solid #ffffff', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: '44px', marginBottom: '24px',
+          }}
+        >
           ★
         </div>
-        <h1 className="mb-2 text-2xl font-semibold">Штамп получен!</h1>
-        <p className="mb-8 text-sm text-zinc-400">{state.stampName}</p>
-        <button
-          onClick={() => router.replace('/passport')}
-          className="w-full max-w-sm rounded-lg bg-white py-3 font-semibold text-black"
-        >
-          Открыть паспорт
-        </button>
+        <h1 style={heading}>Штамп получен!</h1>
+        <p style={{ ...sub, marginBottom: '32px' }}>{state.stampName}</p>
+        <Button onClick={() => router.replace('/passport')}>Открыть паспорт</Button>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col px-6 pt-12">
-      {/* Шапка */}
-      <div className="mb-8">
-        <Link href="/passport" className="mb-4 inline-block text-sm text-zinc-500">
-          ← Паспорт
-        </Link>
-        <h1 className="text-2xl font-semibold">Получить штамп</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          Введи номер заказа и email, указанный при покупке
-        </p>
+    <div style={{ ...wrap, justifyContent: 'flex-start', paddingTop: '80px' }}>
+      <button onClick={() => router.replace('/passport')} style={backLink}>← Паспорт</button>
+      <h1 style={{ ...heading, marginTop: '24px' }}>Получить штамп</h1>
+      <p style={{ ...sub, marginBottom: '40px', textAlign: 'center' }}>
+        Введи номер заказа и email, указанный при покупке
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
+        <InputField
+          placeholder="Номер заказа"
+          value={orderId}
+          onChange={(v) => { setOrderId(v); setState({ status: 'idle' }) }}
+        />
+        <InputField
+          placeholder="Email из заказа"
+          value={email}
+          onChange={(v) => { setEmail(v); setState({ status: 'idle' }) }}
+          type="email"
+          error={state.status === 'error' ? state.message : undefined}
+        />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm text-zinc-400" htmlFor="order_id">
-            Номер заказа
-          </label>
-          <input
-            id="order_id"
-            type="text"
-            value={orderId}
-            onChange={(e) => {
-              setOrderId(e.target.value)
-              setState({ status: 'idle' })
-            }}
-            placeholder="Например: 12345"
-            autoComplete="off"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-zinc-400"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm text-zinc-400" htmlFor="email">
-            Email из заказа
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value)
-              setState({ status: 'idle' })
-            }}
-            placeholder="you@example.com"
-            autoComplete="email"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-zinc-400"
-          />
-        </div>
-
-        {state.status === 'error' && (
-          <div className="rounded-lg border border-red-900 bg-red-950/40 px-4 py-3">
-            <p className="text-sm text-red-400">{state.message}</p>
-          </div>
-        )}
-
-        <button
-          type="submit"
+      <div style={{ marginTop: '40px' }}>
+        <Button
+          onClick={handleSubmit}
           disabled={state.status === 'loading' || !orderId.trim() || !email.trim()}
-          className="w-full rounded-lg bg-white py-3 font-semibold text-black disabled:opacity-40"
         >
           {state.status === 'loading' ? 'Проверяем...' : 'Получить штамп'}
-        </button>
-      </form>
+        </Button>
+      </div>
 
-      <p className="mt-6 text-center text-xs text-zinc-600">
-        Штамп выдаётся один раз на заказ.
-        <br />
-        Для курсов — только после прохождения.
+      <p style={{ ...sub, marginTop: '24px', fontSize: '12px', textAlign: 'center' }}>
+        Штамп выдаётся один раз на заказ.<br />Для курсов — только после прохождения.
       </p>
     </div>
   )
+}
+
+const wrap: React.CSSProperties = {
+  minHeight: '100vh',
+  background: '#000000',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '0 24px',
+  fontFamily: 'var(--font-inter), sans-serif',
+}
+
+const heading: React.CSSProperties = {
+  fontFamily: 'var(--font-inter), sans-serif',
+  fontWeight: 800,
+  fontSize: '28px',
+  letterSpacing: '-0.04em',
+  color: '#ffffff',
+  marginBottom: '8px',
+}
+
+const sub: React.CSSProperties = {
+  fontFamily: 'var(--font-inter), sans-serif',
+  fontWeight: 500,
+  fontSize: '14px',
+  color: '#8a8a8a',
+}
+
+const backLink: React.CSSProperties = {
+  alignSelf: 'flex-start',
+  background: 'transparent',
+  border: 'none',
+  color: '#8a8a8a',
+  fontFamily: 'var(--font-inter), sans-serif',
+  fontSize: '14px',
+  cursor: 'pointer',
+  padding: 0,
 }

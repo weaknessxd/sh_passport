@@ -27,6 +27,8 @@ export const users = passport.table('users', {
   about_owner: text('about_owner'),
   region_issued: text('region_issued'),
   gender: text('gender'),
+  theme: text('theme').default('Цифровой эскапизм'),
+  skill_badges: jsonb('skill_badges').default([]),
   custom_slug: text('custom_slug').unique(),
   avatar_url: text('avatar_url'),
   signature_svg: text('signature_svg'),

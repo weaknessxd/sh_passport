@@ -16,7 +16,7 @@ export function StartScreen({ onRegister }: Props) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         background: '#000000',
         display: 'flex',
@@ -24,11 +24,11 @@ export function StartScreen({ onRegister }: Props) {
         alignItems: 'center',
       }}
     >
-      {/* Logo + title group — 450px from top */}
+      {/* Logo + title group — 250px above the button (button: 35px bottom + ~50px height) */}
       <div
         style={{
           position: 'absolute',
-          top: '450px',
+          bottom: 'calc(35px + 50px + 250px)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

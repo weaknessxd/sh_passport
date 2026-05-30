@@ -63,7 +63,7 @@ export function InfoScreen({ onNext, onBack, progress }: Props) {
       {/* Persistent progress bar area */}
       <div
         style={{
-          position: 'fixed',
+          position: 'absolute',
           top: '40px',
           left: 0,
           right: 0,
@@ -84,7 +84,7 @@ export function InfoScreen({ onNext, onBack, progress }: Props) {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.35 }}
         style={{
-          position: 'fixed',
+          position: 'absolute',
           inset: 0,
           background: '#000000',
           display: 'flex',

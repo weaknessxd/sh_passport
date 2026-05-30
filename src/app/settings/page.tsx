@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
+import { Button } from '@/components/ui/Button'
 
 type ProfileData = {
   first_name: string
@@ -11,6 +12,7 @@ type ProfileData = {
   email: string
   birth_date: string
   region_issued: string
+  theme: string
   signature_text: string
   about_owner: string
 }
@@ -103,6 +105,7 @@ export default function SettingsPage() {
     email: '',
     birth_date: '',
     region_issued: '',
+    theme: '',
     signature_text: '',
     about_owner: '',
   })
@@ -125,6 +128,7 @@ export default function SettingsPage() {
             email: res.user.email ?? '',
             birth_date: res.user.birth_date ?? '',
             region_issued: res.user.region_issued ?? '',
+            theme: res.user.theme ?? '',
             signature_text: res.user.signature_text ?? '',
             about_owner: res.user.about_owner ?? '',
           })
@@ -138,8 +142,8 @@ export default function SettingsPage() {
     return (value: string) => setData((prev) => ({ ...prev, [field]: value }))
   }
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSave(e?: React.FormEvent) {
+    e?.preventDefault()
     if (!initData) return
 
     setSaveState('saving')
@@ -153,6 +157,7 @@ export default function SettingsPage() {
     if (data.email.trim()) payload['email'] = data.email.trim()
     if (data.birth_date) payload['birth_date'] = data.birth_date
     if (data.region_issued !== undefined) payload['region_issued'] = data.region_issued.trim()
+    if (data.theme !== undefined) payload['theme'] = data.theme.trim()
     if (data.signature_text !== undefined) payload['signature_text'] = data.signature_text.trim()
     if (data.about_owner !== undefined) payload['about_owner'] = data.about_owner.trim()
 
@@ -249,12 +254,21 @@ export default function SettingsPage() {
               type="date"
             />
             <Field
-              label="Регион"
+              label="Город"
               id="region_issued"
               value={data.region_issued}
               onChange={set('region_issued')}
               placeholder="Москва"
               maxLength={64}
+            />
+            <Field
+              label="Тема"
+              id="theme"
+              value={data.theme}
+              onChange={set('theme')}
+              placeholder="Цифровой эскапизм"
+              maxLength={64}
+              hint="Отображается на паспорте"
             />
           </div>
         </section>
@@ -291,18 +305,12 @@ export default function SettingsPage() {
       </form>
 
       {/* Плавающая кнопка сохранения */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-zinc-800 bg-black px-4 py-3">
-        <button
-          type="submit"
-          form="settings-form"
-          onClick={handleSave}
-          disabled={saveState === 'saving'}
-          className="w-full rounded-lg bg-white py-3 font-semibold text-black disabled:opacity-40"
-        >
+      <div className="fixed bottom-0 left-0 right-0 flex justify-center border-t border-zinc-800 bg-black px-4 py-4">
+        <Button onClick={handleSave} disabled={saveState === 'saving'}>
           {saveState === 'saving' && 'Сохраняем...'}
           {saveState === 'saved' && '✓ Сохранено'}
           {(saveState === 'idle' || saveState === 'error') && 'Сохранить'}
-        </button>
+        </Button>
       </div>
     </div>
   )

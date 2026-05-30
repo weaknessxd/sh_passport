@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence } from 'framer-motion'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
+import { ResponsiveStage } from '@/components/ui/ResponsiveStage'
 import { StartScreen } from '@/components/onboarding/StartScreen'
 import { InfoScreen } from '@/components/onboarding/InfoScreen'
 import { PhotoScreen } from '@/components/onboarding/PhotoScreen'
@@ -101,27 +102,41 @@ export default function OnboardingPage() {
   const progress = PROGRESS[step]
 
   return (
-    <div style={{ background: '#000000', minHeight: '100vh' }}>
-      <AnimatePresence mode="wait">
-        {step === 'start' && (
-          <StartScreen key="start" onRegister={handleStart} />
-        )}
-        {step === 'info' && (
-          <InfoScreen
-            key="info"
-            onNext={handleInfo}
-            onBack={() => setStep('start')}
-            progress={progress}
-          />
-        )}
-        {step === 'photo' && (
-          <PhotoScreen
-            key="photo"
-            onNext={handlePhoto}
-            onBack={() => setStep('info')}
-            progress={progress}
-          />
-        )}
+    <>
+      {/* Portrait steps — rendered inside a proportionally-scaled stage
+          (design reference: iPhone 15 Pro Max 430×932). */}
+      {step !== 'signature' && (
+        <ResponsiveStage>
+          <AnimatePresence mode="wait">
+            {step === 'start' && (
+              <StartScreen key="start" onRegister={handleStart} />
+            )}
+            {step === 'info' && (
+              <InfoScreen
+                key="info"
+                onNext={handleInfo}
+                onBack={() => setStep('start')}
+                progress={progress}
+              />
+            )}
+            {step === 'photo' && (
+              <PhotoScreen
+                key="photo"
+                onNext={handlePhoto}
+                onBack={() => setStep('info')}
+                progress={progress}
+              />
+            )}
+            {step === 'final' && (
+              <FinalScreen key="final" onEnter={handleEnterPassport} />
+            )}
+          </AnimatePresence>
+        </ResponsiveStage>
+      )}
+
+      {/* Signature manages its own full-viewport layout (portrait prompt +
+          landscape canvas), so it stays outside the portrait stage. */}
+      <AnimatePresence>
         {step === 'signature' && (
           <SignatureScreen
             key="signature"
@@ -130,10 +145,7 @@ export default function OnboardingPage() {
             progress={progress}
           />
         )}
-        {step === 'final' && (
-          <FinalScreen key="final" onEnter={handleEnterPassport} />
-        )}
       </AnimatePresence>
-    </div>
+    </>
   )
 }

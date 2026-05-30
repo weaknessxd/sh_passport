@@ -1,15 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { PageNavigator } from './PageNavigator'
-import { CoverPage } from './pages/CoverPage'
+import { ResponsiveStage } from '@/components/ui/ResponsiveStage'
+import { Button } from '@/components/ui/Button'
+import { CameraNavigator } from './CameraNavigator'
+import { SkillBadgesModal } from './SkillBadgesModal'
 import { MainPage } from './pages/MainPage'
 import { StampsPage } from './pages/StampsPage'
-import { FinalPage } from './pages/FinalPage'
-import { FormatPage } from './pages/FormatPage'
-import { formatINV } from '@/lib/passport/identifier'
 
 type StampData = {
   id: number
@@ -23,143 +22,157 @@ type UserData = {
   first_name?: string | null
   last_name?: string | null
   tg_username?: string | null
-  avatar_url?: string | null
-  registered_at?: string
+  gender?: string | null
   birth_date?: string | null
+  city?: string | null
+  region_issued?: string | null
+  theme?: string | null
+  avatar_url?: string | null
+  signature_svg?: string | null
+  skill_badges?: string[]
+  registered_at?: string | null
 }
 
 type Props = {
   user: UserData
   stamps?: StampData[]
-  seriesCode?: string
-  totalPages?: number
+  initData?: string | null
 }
 
-const STAMPS_PER_PAGE = 6
-const STAMPS_PAGE_START = 3  // страницы 3–12 под штампы (10 страниц = 60 слотов)
-const STAMPS_PAGE_COUNT = 10
+const STAMPS_PER_PAGE = 8
+const STAMP_PAGES = 3 // 24 slots
 
-export function PassportViewer({
-  user,
-  stamps = [],
-  seriesCode = 'FB25',
-  totalPages = 16,
-}: Props) {
+export function PassportViewer({ user, stamps = [], initData }: Props) {
+  const router = useRouter()
   const [page, setPage] = useState(0)
-  const [direction, setDirection] = useState(1)
+  const [badges, setBadges] = useState<string[]>(user.skill_badges ?? [])
+  const [badgesOpen, setBadgesOpen] = useState(false)
 
-  const inv = formatINV(user.id, seriesCode)
+  // page 0 = main, pages 1..STAMP_PAGES = stamps
+  const totalPages = 1 + STAMP_PAGES
+  const pagesMeta = [
+    { label: '' }, // main
+    ...Array.from({ length: STAMP_PAGES }, (_, i) => ({ label: String(i + 1) })),
+  ]
 
-  function goTo(next: number) {
-    setDirection(next > page ? 1 : -1)
-    setPage(next)
+  async function saveBadges(next: string[]) {
+    setBadges(next)
+    setBadgesOpen(false)
+    if (!initData) return
+    try {
+      await fetch('/api/user/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData, skill_badges: next }),
+      })
+    } catch {
+      /* non-critical */
+    }
+  }
+
+  function handleShare() {
+    const num = String(user.id).padStart(4, '0')
+    const text = `Мой паспорт Щёлочь №${num}`
+    try {
+      const tg = (window as unknown as {
+        Telegram?: { WebApp?: { switchInlineQuery?: (q: string) => void; openTelegramLink?: (u: string) => void } }
+      }).Telegram
+      if (tg?.WebApp?.openTelegramLink) {
+        tg.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent('https://t.me/')}&text=${encodeURIComponent(text)}`)
+        return
+      }
+    } catch { /* ignore */ }
+    if (navigator.share) {
+      void navigator.share({ title: 'Паспорт Щёлочь', text }).catch(() => {})
+    }
   }
 
   function renderPage(index: number) {
     if (index === 0) {
-      return <CoverPage inv={inv} seriesCode={seriesCode} />
-    }
-    if (index === 1 || index === 2) {
       return (
         <MainPage
-          inv={inv}
+          userId={user.id}
+          nick={user.tg_username}
           firstName={user.first_name}
           lastName={user.last_name}
-          username={user.tg_username}
-          avatarUrl={user.avatar_url}
-          registeredAt={user.registered_at}
+          gender={user.gender}
           birthDate={user.birth_date}
+          city={user.city ?? user.region_issued}
+          theme={user.theme}
+          avatarUrl={user.avatar_url}
+          signatureSvg={user.signature_svg}
+          registeredAt={user.registered_at}
+          badges={badges}
+          onBadgesClick={() => setBadgesOpen(true)}
         />
       )
     }
-    if (index >= STAMPS_PAGE_START && index < STAMPS_PAGE_START + STAMPS_PAGE_COUNT) {
-      const stampPageIndex = index - STAMPS_PAGE_START
-      return (
-        <StampsPage
-          stamps={stamps}
-          pageIndex={stampPageIndex}
-          stampsPerPage={STAMPS_PER_PAGE}
-        />
-      )
-    }
-    if (index === totalPages - 3) {
-      return <FormatPage variant="reminders" />
-    }
-    if (index === totalPages - 2) {
-      return <FormatPage variant="history" stamps={stamps} />
-    }
-    if (index === totalPages - 1) {
-      return <FinalPage inv={inv} />
-    }
-
-    // Заглушка для остальных страниц
-    return (
-      <div className="relative h-full w-full bg-[#0c0c18] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-zinc-600 text-sm">Страница {index + 1}</p>
-          <p className="text-zinc-800 text-xs mt-1">В разработке</p>
-        </div>
-        <div className="absolute top-2 right-2 rounded bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">
-          PLACEHOLDER
-        </div>
-      </div>
-    )
+    return <StampsPage stamps={stamps} pageIndex={index - 1} stampsPerPage={STAMPS_PER_PAGE} />
   }
 
   return (
-    <div className="flex flex-col h-screen bg-black select-none">
-      {/* Топбар с кнопкой настроек */}
-      <div className="flex items-center justify-end px-4 pt-3 pb-1">
-        <Link
-          href="/settings"
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-800 text-zinc-500"
-          aria-label="Настройки"
+    <ResponsiveStage>
+      {/* Pages */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={page}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          style={{ position: 'absolute', inset: 0 }}
         >
-          ⚙
-        </Link>
-      </div>
+          {renderPage(page)}
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Паспорт */}
-      <div className="relative flex-1 overflow-hidden mx-4 rounded-2xl border border-zinc-800">
-        <AnimatePresence mode="wait" initial={false} custom={direction}>
-          <motion.div
-            key={page}
-            custom={direction}
-            initial={{ x: direction * 60, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: direction * -60, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="absolute inset-0"
-          >
-            {renderPage(page)}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Кнопка получения штампа на страницах со штампами */}
-      {page >= STAMPS_PAGE_START && page < STAMPS_PAGE_START + STAMPS_PAGE_COUNT && (
-        <div className="px-4 pt-2">
-          <Link
-            href="/stamps/claim"
-            className="block w-full rounded-lg border border-[#e94560] py-2 text-center text-sm font-medium text-[#e94560] active:bg-[#e94560]/10"
-          >
-            + Получить штамп
-          </Link>
+      {/* Action pills — only on main page */}
+      {page === 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '662px',
+            left: 0,
+            width: '430px',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '14px',
+          }}
+        >
+          <Button size="md" onClick={handleShare}>Поделиться</Button>
+          <Button size="md" onClick={() => router.push('/settings')}>Редактировать</Button>
         </div>
       )}
 
-      {/* Навигация */}
-      <div className="mb-2">
-        <PageNavigator
-          current={page}
-          total={totalPages}
-          onPrev={() => goTo(page - 1)}
-          onNext={() => goTo(page + 1)}
-        />
-        <p className="text-center text-xs text-zinc-600 pb-1">
-          {page + 1} / {totalPages}
-        </p>
-      </div>
-    </div>
+      {/* Stamp-claim pill — only on stamp pages */}
+      {page > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '662px',
+            left: 0,
+            width: '430px',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <Button size="md" onClick={() => router.push('/stamps/claim')}>+ Получить штамп</Button>
+        </div>
+      )}
+
+      {/* Camera-style navigator */}
+      <CameraNavigator pages={pagesMeta} current={page} onSelect={setPage} />
+
+      {/* Skill badges modal */}
+      <AnimatePresence>
+        {badgesOpen && (
+          <SkillBadgesModal
+            initial={badges}
+            onSave={saveBadges}
+            onClose={() => setBadgesOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+    </ResponsiveStage>
   )
 }

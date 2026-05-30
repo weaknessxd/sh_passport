@@ -16,6 +16,8 @@ const bodySchema = z.object({
   region_issued: z.string().max(64).trim().optional(),
   city: z.string().max(64).trim().optional(),
   gender: z.enum(['М', 'Ж', 'Щ']).optional(),
+  theme: z.string().max(64).trim().optional(),
+  skill_badges: z.array(z.string().max(40)).max(6).optional(),
   signature_text: z.string().max(128).trim().optional(),
   about_owner: z.string().max(256).trim().optional(),
   // base64 data URL (max ~600 KB after JPEG compression)
@@ -39,10 +41,16 @@ function buildUserResponse(u: typeof users.$inferSelect) {
     display_name: u.display_name,
     email: u.email,
     birth_date: u.birth_date,
+    gender: u.gender,
     region_issued: u.region_issued,
+    city: u.region_issued,
+    theme: u.theme,
+    skill_badges: (u.skill_badges as string[] | null) ?? [],
     signature_text: u.signature_text,
+    signature_svg: u.signature_svg,
     about_owner: u.about_owner,
     avatar_url: u.avatar_url,
+    registered_at: u.registered_at ? u.registered_at.toISOString() : null,
     onboarded: Boolean(u.email),
     has_password: Boolean(u.password_hash),
   }
@@ -95,6 +103,8 @@ export async function POST(request: Request) {
   if (fields.region_issued !== undefined) updateData.region_issued = fields.region_issued || null
   if (fields.city !== undefined) updateData.region_issued = fields.city || null
   if (fields.gender !== undefined) updateData.gender = fields.gender || null
+  if (fields.theme !== undefined) updateData.theme = fields.theme || null
+  if (fields.skill_badges !== undefined) updateData.skill_badges = fields.skill_badges
   if (fields.signature_text !== undefined) updateData.signature_text = fields.signature_text || null
   if (fields.about_owner !== undefined) updateData.about_owner = fields.about_owner || null
   if (fields.avatar_url !== undefined) updateData.avatar_url = fields.avatar_url || null

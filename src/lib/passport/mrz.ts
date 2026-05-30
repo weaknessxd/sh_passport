@@ -1,3 +1,37 @@
+export type CardMRZParams = {
+  nick?: string | null
+  lastName?: string | null
+  firstName?: string | null
+  city?: string | null
+  birthDate?: string | null
+  number: number
+}
+
+/**
+ * Decorative 3-line MRZ strip shown at the bottom of the passport card.
+ * Looser than the strict TD3 format — purely cosmetic.
+ */
+export function generateCardMRZ(p: CardMRZParams): [string, string, string] {
+  const nick = toMRZChars((p.nick ?? '') + 'DSGN')
+  const last = toMRZChars(p.lastName ?? 'UNKNOWN')
+  const first = toMRZChars(p.firstName ?? 'UNKNOWN')
+  const city = toMRZChars(p.city ?? '')
+
+  let dob = '000000'
+  if (p.birthDate) {
+    const [y, m, d] = p.birthDate.split('-')
+    dob = `${(y ?? '').slice(2)}${m ?? '00'}${d ?? '00'}`
+  }
+
+  const num = String(p.number).padStart(4, '0')
+
+  const line1 = `TM26<${nick}<<${last}<<${first}`
+  const line2 = `<<<<${city}<GDETORYADOM<<<<${num}${dob.slice(0, 2)}`
+  const line3 = '<'.repeat(28)
+
+  return [line1.slice(0, 44), line2.slice(0, 44), line3]
+}
+
 /** Converts a string to MRZ-safe characters (A-Z, 0-9, < as filler). */
 function toMRZChars(s: string): string {
   return s

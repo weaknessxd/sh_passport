@@ -2,40 +2,65 @@
 
 import { motion } from 'framer-motion'
 
+type Size = 'lg' | 'md'
+
 type Props = {
   children: React.ReactNode
   onClick?: () => void
   disabled?: boolean
   type?: 'button' | 'submit'
   className?: string
+  /** lg = onboarding (default), md = passport action pills */
+  size?: Size
+}
+
+const SIZES: Record<Size, { py: number; px: number; pyHover: number; pxHover: number; font: number }> = {
+  lg: { py: 10, px: 75, pyHover: 15, pxHover: 85, font: 25 },
+  md: { py: 10, px: 40, pyHover: 12, pxHover: 46, font: 18 },
 }
 
 /**
- * Primary onboarding button.
- * Initial:  white bg, black text, py-[10px] px-[75px]
- * Tap/hold: py-[15px] px-[85px]
- * Disabled: #414141 bg, #747373 text, same padding as initial
+ * Primary white pill button used across the app.
+ * Initial: white bg, black text. Hover/tap: padding grows.
+ * Disabled: #414141 bg, #747373 text, same padding as initial.
  */
-export function Button({ children, onClick, disabled = false, type = 'button', className = '' }: Props) {
+export function Button({
+  children,
+  onClick,
+  disabled = false,
+  type = 'button',
+  className = '',
+  size = 'lg',
+}: Props) {
+  const s = SIZES[size]
+  const hover = disabled
+    ? {}
+    : {
+        paddingTop: `${s.pyHover}px`,
+        paddingBottom: `${s.pyHover}px`,
+        paddingLeft: `${s.pxHover}px`,
+        paddingRight: `${s.pxHover}px`,
+      }
+
   return (
     <motion.button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      whileTap={disabled ? {} : { paddingTop: '15px', paddingBottom: '15px', paddingLeft: '85px', paddingRight: '85px' }}
-      whileHover={disabled ? {} : { paddingTop: '15px', paddingBottom: '15px', paddingLeft: '85px', paddingRight: '85px' }}
+      whileTap={hover}
+      whileHover={hover}
       transition={{ duration: 0.15, ease: 'easeOut' }}
       style={{
-        paddingTop: '10px',
-        paddingBottom: '10px',
-        paddingLeft: '75px',
-        paddingRight: '75px',
+        paddingTop: `${s.py}px`,
+        paddingBottom: `${s.py}px`,
+        paddingLeft: `${s.px}px`,
+        paddingRight: `${s.px}px`,
         backgroundColor: disabled ? '#414141' : '#ffffff',
         color: disabled ? '#747373' : '#000000',
         borderRadius: '999px',
         fontFamily: 'var(--font-inter), sans-serif',
         fontWeight: 700,
-        fontSize: '25px',
+        fontSize: `${s.font}px`,
         letterSpacing: '-0.05em',
         border: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer',

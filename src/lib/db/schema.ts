@@ -43,6 +43,8 @@ export const presets = passport.table('presets', {
   name: text('name').notNull(),
   series_code: text('series_code').notNull(),
   config: jsonb('config').notNull(),
+  // Тема по умолчанию для новых пользователей (управляется из админки)
+  is_default: boolean('is_default').default(false),
   active_from: date('active_from'),
   active_until: date('active_until'),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),

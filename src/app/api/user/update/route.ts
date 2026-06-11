@@ -4,7 +4,8 @@ import { z } from 'zod'
 import crypto from 'node:crypto'
 import { validateInitData, InitDataValidationError } from '@/lib/telegram/validate-init-data'
 import { db } from '@/lib/db/client'
-import { users } from '@/lib/db/schema'
+import { users, presets } from '@/lib/db/schema'
+import { resolveTheme } from '@/lib/passport/theme'
 
 const bodySchema = z.object({
   initData: z.string().min(1),
@@ -162,5 +163,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'user not found' }, { status: 404 })
   }
 
-  return NextResponse.json({ user: buildUserResponse(user) })
+  // Конфиг активной темы пользователя (или дефолтной, если не назначена)
+  let presetRow = user.active_preset_id
+    ? (await db.select().from(presets).where(eq(presets.id, user.active_preset_id)).limit(1))[0] ?? null
+    : null
+  if (!presetRow) {
+    presetRow = (await db.select().from(presets).where(eq(presets.is_default, true)).limit(1))[0] ?? null
+  }
+  const themeConfig = resolveTheme(presetRow?.config)
+
+  return NextResponse.json({ user: buildUserResponse(user), theme_config: themeConfig })
 }

@@ -14,7 +14,7 @@ import {
   InitDataValidationError,
 } from '@/lib/telegram/validate-init-data'
 import { db } from '@/lib/db/client'
-import { users } from '@/lib/db/schema'
+import { users, presets } from '@/lib/db/schema'
 
 export async function POST(request: Request) {
   let body: { initData?: string }
@@ -65,11 +65,20 @@ export async function POST(request: Request) {
   let isNew = false
 
   if (!user) {
+    // Новому пользователю назначаем активную тему (выбирается в админке)
+    const defaultPreset = await db
+      .select({ id: presets.id, name: presets.name })
+      .from(presets)
+      .where(eq(presets.is_default, true))
+      .limit(1)
+
     const inserted = await db
       .insert(users)
       .values({
         tg_id: tgId,
         tg_username: validated.user.username ?? null,
+        active_preset_id: defaultPreset[0]?.id ?? null,
+        theme: defaultPreset[0]?.name ?? undefined,
       })
       .returning()
     const newUser = inserted[0]

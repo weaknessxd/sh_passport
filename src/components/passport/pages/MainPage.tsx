@@ -2,6 +2,7 @@
 
 import { formatPassportNumber } from '@/lib/passport/identifier'
 import { generateCardMRZ } from '@/lib/passport/mrz'
+import { DEFAULT_THEME, type ThemeConfig } from '@/lib/passport/theme'
 
 type Props = {
   userId: number
@@ -12,6 +13,7 @@ type Props = {
   birthDate?: string | null
   city?: string | null
   theme?: string | null
+  themeConfig?: ThemeConfig
   avatarUrl?: string | null
   signatureSvg?: string | null
   registeredAt?: string | null
@@ -28,9 +30,9 @@ const PAD = 26
 const PHOTO_W = 168
 const PHOTO_H = Math.round((PHOTO_W * 430) / 320) // ≈ 226
 
-const C_LABEL = '#8a8a8a'
-const C_VALUE = '#111111'
-const C_RED = '#ED1C24'
+// Цвета берутся из CSS-переменных, которые задаёт корень карточки (тема)
+const C_LABEL = 'var(--pc-label)'
+const C_VALUE = 'var(--pc-text)'
 
 const GENDER_LABELS: Record<string, string> = { М: 'мужской', Ж: 'женский', Щ: 'щёлочь' }
 
@@ -93,10 +95,11 @@ function prepareSignatureSvg(svg: string): string {
 
 export function MainPage({
   userId, nick, firstName, lastName, gender, birthDate, city, theme,
-  avatarUrl, signatureSvg, registeredAt, badges = [], onBadgesClick,
+  themeConfig, avatarUrl, signatureSvg, registeredAt, badges = [], onBadgesClick,
 }: Props) {
+  const t = themeConfig ?? DEFAULT_THEME
   const num = formatPassportNumber(userId, registeredAt)
-  const mrz = generateCardMRZ({ nick, lastName, firstName, city, birthDate, number: userId })
+  const mrz = generateCardMRZ({ nick, lastName, firstName, city, birthDate, number: userId, prefix: t.mrz_prefix })
 
   const rightX = PAD + PHOTO_W + 16
   const rightW = CARD_W - PAD - rightX
@@ -111,15 +114,17 @@ export function MainPage({
           left: `${CARD_LEFT}px`,
           width: `${CARD_W}px`,
           height: `${CARD_H}px`,
-          background: '#D9D9D9',
+          background: t.colors.card_bg,
           borderRadius: '28px',
           overflow: 'hidden',
-        }}
+          '--pc-label': t.colors.label,
+          '--pc-text': t.colors.text,
+        } as React.CSSProperties}
       >
         {/* Watermark */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/icons/bear.svg"
+          src={t.watermark_main}
           alt=""
           aria-hidden
           style={{
@@ -169,7 +174,7 @@ export function MainPage({
             fontSize: '24px',
             lineHeight: 0.95,
             letterSpacing: '-0.04em',
-            color: C_RED,
+            color: t.colors.accent,
           }}
         >
           <div>{num.top}</div>
@@ -205,7 +210,7 @@ export function MainPage({
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <Label>подпись</Label>
-              <div style={{ height: '26px', borderBottom: '1px solid #9a9a9a', position: 'relative' }}>
+              <div style={{ height: '26px', borderBottom: `1px solid ${t.colors.border}`, position: 'relative' }}>
                 {signatureSvg && (
                   <div
                     style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
@@ -222,7 +227,7 @@ export function MainPage({
           <div style={{ display: 'flex', gap: '12px' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <Label>выдан</Label>
-              <Value style={{ fontSize: '19px' }}>ГУ МСД Щёлочь</Value>
+              <Value style={{ fontSize: '19px' }}>{t.issuer}</Value>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <Label>тема</Label>
@@ -231,7 +236,7 @@ export function MainPage({
           </div>
           <div style={{ height: '14px' }} />
           <Label>дата выдачи</Label>
-          <Value style={{ fontSize: '19px' }}>31.12.2999</Value>
+          <Value style={{ fontSize: '19px' }}>{t.issue_date}</Value>
         </div>
 
         {/* Skill badges area — tappable */}
@@ -243,7 +248,7 @@ export function MainPage({
             left: `${PAD}px`,
             width: `${CARD_W - PAD * 2}px`,
             height: '300px',
-            border: '2px dashed #9a9a9a',
+            border: `2px dashed ${t.colors.border}`,
             borderRadius: '16px',
             background: 'transparent',
             cursor: 'pointer',
@@ -266,8 +271,8 @@ export function MainPage({
                   fontWeight: 700,
                   fontSize: '13px',
                   letterSpacing: '-0.03em',
-                  color: '#111',
-                  background: '#c4c4c4',
+                  color: t.colors.text,
+                  background: t.colors.badge_bg,
                   borderRadius: '999px',
                   padding: '6px 12px',
                 }}
@@ -287,7 +292,7 @@ export function MainPage({
                 fontFamily: 'ui-monospace, monospace',
                 fontSize: '8px',
                 letterSpacing: '0.18em',
-                color: '#9a9a9a',
+                color: t.colors.border,
                 lineHeight: 1.5,
                 textAlign: i === 2 ? 'center' : 'left',
                 whiteSpace: 'nowrap',

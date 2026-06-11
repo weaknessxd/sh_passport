@@ -9,6 +9,7 @@ import { CameraNavigator } from './CameraNavigator'
 import { SkillBadgesModal } from './SkillBadgesModal'
 import { MainPage } from './pages/MainPage'
 import { StampsPage } from './pages/StampsPage'
+import type { ThemeConfig } from '@/lib/passport/theme'
 
 type StampData = {
   id: number
@@ -37,12 +38,13 @@ type Props = {
   user: UserData
   stamps?: StampData[]
   initData?: string | null
+  themeConfig?: ThemeConfig
 }
 
 const STAMPS_PER_PAGE = 8
 const STAMP_PAGES = 3 // 24 slots
 
-export function PassportViewer({ user, stamps = [], initData }: Props) {
+export function PassportViewer({ user, stamps = [], initData, themeConfig }: Props) {
   const router = useRouter()
   const [page, setPage] = useState(0)
   const [badges, setBadges] = useState<string[]>(user.skill_badges ?? [])
@@ -99,6 +101,7 @@ export function PassportViewer({ user, stamps = [], initData }: Props) {
           birthDate={user.birth_date}
           city={user.city ?? user.region_issued}
           theme={user.theme}
+          themeConfig={themeConfig}
           avatarUrl={user.avatar_url}
           signatureSvg={user.signature_svg}
           registeredAt={user.registered_at}
@@ -107,7 +110,7 @@ export function PassportViewer({ user, stamps = [], initData }: Props) {
         />
       )
     }
-    return <StampsPage stamps={stamps} pageIndex={index - 1} stampsPerPage={STAMPS_PER_PAGE} />
+    return <StampsPage stamps={stamps} pageIndex={index - 1} stampsPerPage={STAMPS_PER_PAGE} themeConfig={themeConfig} />
   }
 
   return (

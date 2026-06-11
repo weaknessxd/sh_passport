@@ -1,5 +1,7 @@
 'use client'
 
+import { DEFAULT_THEME, type ThemeConfig } from '@/lib/passport/theme'
+
 type StampData = {
   id: number
   name: string
@@ -11,6 +13,7 @@ type Props = {
   stamps?: StampData[]
   pageIndex: number
   stampsPerPage?: number
+  themeConfig?: ThemeConfig
 }
 
 const CARD_W = 422
@@ -18,7 +21,8 @@ const CARD_H = 760
 const CARD_LEFT = 4
 const PAD = 26
 
-export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props) {
+export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8, themeConfig }: Props) {
+  const t = themeConfig ?? DEFAULT_THEME
   const start = pageIndex * stampsPerPage
   const slots = Array.from({ length: stampsPerPage }, (_, i) => stamps[start + i] ?? null)
 
@@ -31,7 +35,7 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props)
           left: `${CARD_LEFT}px`,
           width: `${CARD_W}px`,
           height: `${CARD_H}px`,
-          background: '#D9D9D9',
+          background: t.colors.card_bg,
           borderRadius: '28px',
           overflow: 'hidden',
         }}
@@ -39,7 +43,7 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props)
         {/* Creatures watermark — bottom */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/icons/creatures.svg"
+          src={t.watermark_stamps}
           alt=""
           aria-hidden
           style={{
@@ -69,7 +73,7 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props)
               key={i}
               style={{
                 aspectRatio: '160 / 96',
-                border: '1.5px dashed #9a9a9a',
+                border: `1.5px dashed ${t.colors.border}`,
                 borderRadius: '14px',
                 display: 'flex',
                 alignItems: 'center',
@@ -86,7 +90,7 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props)
                       fontWeight: 700,
                       fontSize: '11px',
                       letterSpacing: '-0.03em',
-                      color: '#111',
+                      color: t.colors.text,
                       marginTop: '4px',
                     }}
                   >
@@ -108,7 +112,7 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8 }: Props)
             fontFamily: 'var(--font-inter), sans-serif',
             fontWeight: 700,
             fontSize: '12px',
-            color: '#7a7a7a',
+            color: t.colors.label,
           }}
         >
           {pageIndex + 1}

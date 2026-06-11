@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
 import { PassportViewer } from '@/components/passport/PassportViewer'
+import type { ThemeConfig } from '@/lib/passport/theme'
 
 type StampData = {
   id: number
@@ -31,6 +32,7 @@ export default function PassportPage() {
   const { user, initData } = useTMAUser()
   const [stamps, setStamps] = useState<StampData[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [themeConfig, setThemeConfig] = useState<ThemeConfig | undefined>(undefined)
 
   useEffect(() => {
     if (!initData) return
@@ -39,8 +41,9 @@ export default function PassportPage() {
     const params = new URLSearchParams({ initData })
     fetch(`/api/user/update?${params.toString()}`)
       .then((r) => r.json())
-      .then((res: { user?: Profile }) => {
+      .then((res: { user?: Profile; theme_config?: ThemeConfig }) => {
         if (res.user) setProfile(res.user)
+        if (res.theme_config) setThemeConfig(res.theme_config)
       })
       .catch(() => { /* fall back to TMA context */ })
 
@@ -100,6 +103,7 @@ export default function PassportPage() {
       }}
       stamps={stamps}
       initData={initData}
+      themeConfig={themeConfig}
     />
   )
 }

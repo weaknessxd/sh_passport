@@ -5,6 +5,8 @@ export type CardMRZParams = {
   city?: string | null
   birthDate?: string | null
   number: number
+  /** Префикс серии (из темы), по умолчанию TM26 */
+  prefix?: string
 }
 
 /**
@@ -25,7 +27,7 @@ export function generateCardMRZ(p: CardMRZParams): [string, string, string] {
 
   const num = String(p.number).padStart(4, '0')
 
-  const line1 = `TM26<${nick}<<${last}<<${first}`
+  const line1 = `${p.prefix ?? 'TM26'}<${nick}<<${last}<<${first}`
   const line2 = `<<<<${city}<GDETORYADOM<<<<${num}${dob.slice(0, 2)}`
   const line3 = '<'.repeat(28)
 

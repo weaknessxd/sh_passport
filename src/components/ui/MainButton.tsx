@@ -9,11 +9,15 @@ export function MainButtonBar({
   onClick,
   disabled = false,
   hidden = false,
+  bg = '#ffffff',
+  textColor = '#000000',
 }: {
   children: React.ReactNode
   onClick?: () => void
   disabled?: boolean
   hidden?: boolean
+  bg?: string
+  textColor?: string
 }) {
   return (
     <div
@@ -38,8 +42,8 @@ export function MainButtonBar({
         style={{
           width: '100%',
           padding: '18px 0',
-          backgroundColor: disabled ? '#414141' : '#ffffff',
-          color: disabled ? '#747373' : '#000000',
+          backgroundColor: disabled ? '#414141' : bg,
+          color: disabled ? '#747373' : textColor,
           border: 'none',
           borderRadius: '100px',
           fontFamily: 'var(--font-inter), sans-serif',

@@ -27,6 +27,21 @@ export type ThemeConfig = {
   issue_date: string
   /** Префикс MRZ-строки */
   mrz_prefix: string
+  /** Оформление онбординга */
+  onboarding: {
+    /** Фоновое изображение всех этапов (URL/dataURL, пусто = чёрный фон) */
+    background: string
+    /** Цвет основной кнопки */
+    button_bg: string
+    /** Цвет текста основной кнопки */
+    button_text: string
+    /** Лого (welcome-экран и обложка) */
+    logo: string
+    /** Спиннер обработки фото */
+    spinner: string
+    /** Иконка «переверни телефон» (пусто = встроенная) */
+    rotate_icon: string
+  }
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
@@ -43,12 +58,23 @@ export const DEFAULT_THEME: ThemeConfig = {
   issuer: 'ГУ МСД Щёлочь',
   issue_date: '31.12.2999',
   mrz_prefix: 'TM26',
+  onboarding: {
+    background: '',
+    button_bg: '#ffffff',
+    button_text: '#000000',
+    logo: '/icons/logo.svg',
+    spinner: '/icons/photo-loading.svg',
+    rotate_icon: '',
+  },
 }
 
 /** Сливает частичный конфиг из БД с дефолтом. */
 export function resolveTheme(raw: unknown): ThemeConfig {
   if (!raw || typeof raw !== 'object') return DEFAULT_THEME
-  const cfg = raw as Partial<ThemeConfig> & { colors?: Partial<ThemeConfig['colors']> }
+  const cfg = raw as Partial<ThemeConfig> & {
+    colors?: Partial<ThemeConfig['colors']>
+    onboarding?: Partial<ThemeConfig['onboarding']>
+  }
   return {
     colors: { ...DEFAULT_THEME.colors, ...(cfg.colors ?? {}) },
     watermark_main: cfg.watermark_main ?? DEFAULT_THEME.watermark_main,
@@ -56,5 +82,6 @@ export function resolveTheme(raw: unknown): ThemeConfig {
     issuer: cfg.issuer ?? DEFAULT_THEME.issuer,
     issue_date: cfg.issue_date ?? DEFAULT_THEME.issue_date,
     mrz_prefix: cfg.mrz_prefix ?? DEFAULT_THEME.mrz_prefix,
+    onboarding: { ...DEFAULT_THEME.onboarding, ...(cfg.onboarding ?? {}) },
   }
 }

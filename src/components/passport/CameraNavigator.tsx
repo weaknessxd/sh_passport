@@ -14,10 +14,10 @@ type Props = {
   onSelect: (index: number) => void
 }
 
-const SLOT = 52
+const SLOT = 64
 const CONTAINER_W = 430
-const RING = 46
-const DOT = 8
+const RING = 58
+const DOT = 9
 
 function centerForIndex(i: number): number {
   return CONTAINER_W / 2 - (i * SLOT + SLOT / 2)
@@ -92,7 +92,12 @@ export function CameraNavigator({ pages, current, onSelect }: Props) {
         {pages.map((page, i) => {
           const dist = Math.abs(i - live)
           const t = Math.max(0, 1 - dist) // 1 at center → 0 a slot away
-          const size = DOT + (RING - DOT) * t
+          // плавный спад размеров: центр 58 → сосед 30 → через один 14 → дальние 9
+          const size =
+            dist <= 1 ? RING + (30 - RING) * dist
+            : dist <= 2 ? 30 + (14 - 30) * (dist - 1)
+            : dist <= 3 ? 14 + (DOT - 14) * (dist - 2)
+            : DOT
           const isCenter = i === nearest
           return (
             <div
@@ -112,17 +117,19 @@ export function CameraNavigator({ pages, current, onSelect }: Props) {
                   width: `${size}px`,
                   height: `${size}px`,
                   borderRadius: '999px',
-                  border: `3px solid rgba(255,255,255,${t})`,
-                  background: `rgba(107,107,107,${1 - t})`,
+                  border: `4px solid rgba(255,255,255,${t})`,
+                  background: `rgba(140,140,140,${1 - t})`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontFamily: 'var(--font-inter), sans-serif',
                   fontWeight: 800,
-                  fontSize: '16px',
+                  fontStyle: 'italic',
+                  fontSize: '20px',
                   letterSpacing: '-0.03em',
                   color: '#ffffff',
                   overflow: 'hidden',
+                  boxSizing: 'border-box',
                 }}
               >
                 {isCenter && t > 0.5 ? page.label : ''}

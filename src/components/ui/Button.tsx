@@ -16,7 +16,7 @@ type Props = {
 
 const SIZES: Record<Size, { py: number; px: number; pyHover: number; pxHover: number; font: number }> = {
   lg: { py: 10, px: 75, pyHover: 15, pxHover: 85, font: 25 },
-  md: { py: 10, px: 40, pyHover: 12, pxHover: 46, font: 18 },
+  md: { py: 13, px: 34, pyHover: 15, pxHover: 40, font: 21 },
 }
 
 /**

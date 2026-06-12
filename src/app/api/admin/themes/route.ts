@@ -15,6 +15,9 @@ export async function GET(request: Request) {
   return NextResponse.json({ themes: all, default_config: DEFAULT_THEME })
 }
 
+// Лимит на data:URL картинки (фоны/svg хранятся прямо в конфиге)
+const assetString = z.string().max(2_000_000)
+
 const themeConfigSchema = z.object({
   colors: z.object({
     card_bg: z.string(),
@@ -24,11 +27,19 @@ const themeConfigSchema = z.object({
     border: z.string(),
     badge_bg: z.string(),
   }),
-  watermark_main: z.string(),
-  watermark_stamps: z.string(),
+  watermark_main: assetString,
+  watermark_stamps: assetString,
   issuer: z.string(),
   issue_date: z.string(),
   mrz_prefix: z.string(),
+  onboarding: z.object({
+    background: assetString,
+    button_bg: z.string(),
+    button_text: z.string(),
+    logo: assetString,
+    spinner: assetString,
+    rotate_icon: assetString,
+  }),
 })
 
 const createSchema = z.object({

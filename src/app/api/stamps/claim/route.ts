@@ -112,11 +112,12 @@ export async function POST(request: Request) {
     )
   }
 
-  // Проверяем — штамп уже выдан для этого заказа?
+  // Проверяем — штамп по этому заказу уже выдан (кому угодно)?
+  // Один заказ = один штамп, иначе чужой использованный заказ можно заклеймить повторно.
   const existingStamp = await db
     .select()
     .from(stamps)
-    .where(and(eq(stamps.user_id, user.id), eq(stamps.source_id, order_id)))
+    .where(eq(stamps.source_id, order_id))
     .limit(1)
 
   if (existingStamp[0]) {

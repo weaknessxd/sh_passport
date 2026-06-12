@@ -207,6 +207,54 @@ function ThemesTab({ api }: { api: (p: string, i?: RequestInit) => Promise<Respo
   )
 }
 
+/** Поле ассета: URL/путь + загрузка файла (конвертируется в data:URL) + превью */
+function AssetField({
+  label, value, onChange, accept = 'image/svg+xml,image/*', allowEmpty = false,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  accept?: string
+  allowEmpty?: boolean
+}) {
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => onChange(reader.result as string)
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+  const isImage = value.startsWith('/') || value.startsWith('http') || value.startsWith('data:')
+  return (
+    <div>
+      <label style={S.label}>{label}</label>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        {isImage && value && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value} alt="" style={{ width: '38px', height: '38px', objectFit: 'contain', background: '#2a2a2a', borderRadius: '8px', flexShrink: 0 }} />
+        )}
+        <input
+          style={{ ...S.input, fontSize: '11px', fontFamily: 'ui-monospace, monospace' }}
+          value={value.startsWith('data:') ? `(файл загружен, ${Math.round(value.length / 1024)} КБ)` : value}
+          onChange={(e) => { if (!value.startsWith('data:')) onChange(e.target.value) }}
+          placeholder={allowEmpty ? 'пусто = по умолчанию' : '/icons/...'}
+          readOnly={value.startsWith('data:')}
+        />
+        <label style={{ ...S.btnGhost, padding: '8px 12px', fontSize: '12px', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+          Файл…
+          <input type="file" accept={accept} onChange={handleFile} style={{ display: 'none' }} />
+        </label>
+        {value && (
+          <button style={{ ...S.btnGhost, padding: '8px 10px', fontSize: '12px' }} onClick={() => onChange('')} title="Очистить">
+            ✕
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ThemeForm({
   api, theme, onDone,
 }: {
@@ -218,6 +266,7 @@ function ThemeForm({
     ...DEFAULT_THEME,
     ...(theme?.config ?? {}),
     colors: { ...DEFAULT_THEME.colors, ...(theme?.config?.colors ?? {}) },
+    onboarding: { ...DEFAULT_THEME.onboarding, ...(theme?.config?.onboarding ?? {}) },
   }
   const [name, setName] = useState(theme?.name ?? '')
   const [series, setSeries] = useState(theme?.series_code ?? 'TM26')
@@ -231,6 +280,9 @@ function ThemeForm({
   }
   function setField(key: 'watermark_main' | 'watermark_stamps' | 'issuer' | 'issue_date' | 'mrz_prefix') {
     return (v: string) => setCfg((p) => ({ ...p, [key]: v }))
+  }
+  function setOb(key: keyof ThemeConfig['onboarding']) {
+    return (v: string) => setCfg((p) => ({ ...p, onboarding: { ...p.onboarding, [key]: v } }))
   }
 
   async function save() {
@@ -288,11 +340,8 @@ function ThemeForm({
         ))}
       </div>
 
-      <label style={S.label}>Водяной знак — главная (URL/путь к SVG)</label>
-      <input style={S.input} value={cfg.watermark_main} onChange={(e) => setField('watermark_main')(e.target.value)} />
-
-      <label style={S.label}>Водяной знак — штампы</label>
-      <input style={S.input} value={cfg.watermark_stamps} onChange={(e) => setField('watermark_stamps')(e.target.value)} />
+      <AssetField label="Водяной знак — главная (SVG)" value={cfg.watermark_main} onChange={setField('watermark_main')} />
+      <AssetField label="Водяной знак — штампы (SVG)" value={cfg.watermark_stamps} onChange={setField('watermark_stamps')} />
 
       <label style={S.label}>Текст «выдан»</label>
       <input style={S.input} value={cfg.issuer} onChange={(e) => setField('issuer')(e.target.value)} />
@@ -302,6 +351,45 @@ function ThemeForm({
 
       <label style={S.label}>Префикс MRZ</label>
       <input style={S.input} value={cfg.mrz_prefix} onChange={(e) => setField('mrz_prefix')(e.target.value)} />
+
+      {/* ── Онбординг ── */}
+      <div style={{ borderTop: '1px solid #333', marginTop: '18px', paddingTop: '12px' }}>
+        <strong style={{ fontSize: '14px' }}>Онбординг</strong>
+
+        <AssetField
+          label="Фоновое изображение этапов (пусто = чёрный)"
+          value={cfg.onboarding.background}
+          onChange={setOb('background')}
+          accept="image/*"
+          allowEmpty
+        />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
+          {([['button_bg', 'Цвет кнопки'], ['button_text', 'Текст кнопки']] as const).map(([key, label]) => (
+            <div key={key}>
+              <label style={S.label}>{label}</label>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  type="color"
+                  value={cfg.onboarding[key]}
+                  onChange={(e) => setOb(key)(e.target.value)}
+                  style={{ width: '38px', height: '38px', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }}
+                />
+                <input style={S.input} value={cfg.onboarding[key]} onChange={(e) => setOb(key)(e.target.value)} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <AssetField label="Лого (welcome и обложка)" value={cfg.onboarding.logo} onChange={setOb('logo')} />
+        <AssetField label="Спиннер обработки фото" value={cfg.onboarding.spinner} onChange={setOb('spinner')} />
+        <AssetField
+          label="Иконка «переверни телефон» (пусто = встроенная)"
+          value={cfg.onboarding.rotate_icon}
+          onChange={setOb('rotate_icon')}
+          allowEmpty
+        />
+      </div>
 
       <label style={{ ...S.label, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '14px', fontSize: '13px', color: '#fff' }}>
         <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} />
@@ -327,6 +415,7 @@ function OrdersTab({ api }: { api: (p: string, i?: RequestInit) => Promise<Respo
   const [csv, setCsv] = useState('')
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState('')
+  const [search, setSearch] = useState('')
 
   const load = useCallback(async () => {
     const res = await api('/api/admin/orders')
@@ -366,12 +455,27 @@ function OrdersTab({ api }: { api: (p: string, i?: RequestInit) => Promise<Respo
   }
 
   async function toggleCourse(o: OrderRow) {
-    await api('/api/admin/orders', {
+    // Оптимистично обновляем на месте — строка не прыгает по таблице
+    setOrders((prev) => prev.map((r) => (r.id === o.id ? { ...r, course_passed: !o.course_passed } : r)))
+    const res = await api('/api/admin/orders', {
       method: 'PATCH',
       body: JSON.stringify({ id: o.id, course_passed: !o.course_passed }),
     })
-    void load()
+    if (!res.ok) void load() // откат при ошибке
   }
+
+  // Фильтр по номеру заказа (подстрока), совпадения с начала — выше
+  const visible = (() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return orders
+    return orders
+      .filter((o) => o.id.toLowerCase().includes(q) || o.email.toLowerCase().includes(q))
+      .sort((a, b) => {
+        const aStarts = a.id.toLowerCase().startsWith(q) ? 0 : 1
+        const bStarts = b.id.toLowerCase().startsWith(q) ? 0 : 1
+        return aStarts - bStarts || a.id.localeCompare(b.id)
+      })
+  })()
 
   return (
     <div>
@@ -399,7 +503,13 @@ function OrdersTab({ api }: { api: (p: string, i?: RequestInit) => Promise<Respo
 
       {/* Список заказов */}
       <div style={{ ...S.card, overflowX: 'auto' }}>
-        <strong style={{ fontSize: '15px' }}>Заказы ({orders.length})</strong>
+        <strong style={{ fontSize: '15px' }}>Заказы ({visible.length}{search ? ` из ${orders.length}` : ''})</strong>
+        <input
+          style={{ ...S.input, marginTop: '10px' }}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Поиск по номеру заказа или email…"
+        />
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', fontSize: '12px' }}>
           <thead>
             <tr style={{ color: '#888', textAlign: 'left' }}>
@@ -411,7 +521,7 @@ function OrdersTab({ api }: { api: (p: string, i?: RequestInit) => Promise<Respo
             </tr>
           </thead>
           <tbody>
-            {orders.map((o) => (
+            {visible.map((o) => (
               <tr key={o.id} style={{ borderTop: '1px solid #222' }}>
                 <td style={{ padding: '6px 8px', fontFamily: 'ui-monospace, monospace' }}>{o.id}</td>
                 <td style={{ padding: '6px 8px' }}>{o.email}</td>
@@ -434,7 +544,7 @@ function OrdersTab({ api }: { api: (p: string, i?: RequestInit) => Promise<Respo
                 </td>
               </tr>
             ))}
-            {orders.length === 0 && (
+            {visible.length === 0 && (
               <tr><td colSpan={5} style={{ padding: '12px 8px', color: '#666' }}>Заказов нет</td></tr>
             )}
           </tbody>

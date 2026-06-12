@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { desc, eq, sql } from 'drizzle-orm'
+import { asc, desc, eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { parse } from 'csv-parse/sync'
 import { db } from '@/lib/db/client'
@@ -11,11 +11,13 @@ export async function GET(request: Request) {
   if (!checkAdminAuth(request)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
+  // Стабильный порядок: id как tiebreaker, чтобы строки не «прыгали»
+  // при одинаковом created_at (например, после переключения course_passed)
   const orders = await db
     .select()
     .from(insalesOrders)
-    .orderBy(desc(insalesOrders.created_at))
-    .limit(100)
+    .orderBy(desc(insalesOrders.created_at), asc(insalesOrders.id))
+    .limit(200)
   return NextResponse.json({ orders })
 }
 

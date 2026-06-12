@@ -27,14 +27,17 @@ const CARD_H = 760
 const CARD_TOP = 10
 const CARD_LEFT = 4
 const PAD = 26
-const PHOTO_W = 168
-const PHOTO_H = Math.round((PHOTO_W * 430) / 320) // ≈ 226
+const PHOTO_W = 178
+const PHOTO_H = Math.round((PHOTO_W * 430) / 320) // ≈ 239
 
 // Цвета берутся из CSS-переменных, которые задаёт корень карточки (тема)
 const C_LABEL = 'var(--pc-label)'
 const C_VALUE = 'var(--pc-text)'
 
-const GENDER_LABELS: Record<string, string> = { М: 'мужской', Ж: 'женский', Щ: 'щёлочь' }
+const GENDER_LABELS: Record<string, string> = {
+  М: 'мужской', Ж: 'женский', Щ: 'щёлочь',
+  Мужской: 'мужской', Женский: 'женский', Секрет: 'щёлочь',
+}
 
 function fmtBirth(iso?: string | null): string {
   if (!iso) return '—'
@@ -146,7 +149,7 @@ export function MainPage({
             left: `${PAD}px`,
             width: `${PHOTO_W}px`,
             height: `${PHOTO_H}px`,
-            borderRadius: '10px',
+            borderRadius: '16px',
             overflow: 'hidden',
             background: '#bcbcbc',
           }}
@@ -171,7 +174,7 @@ export function MainPage({
             fontFamily: 'var(--font-inter), sans-serif',
             fontWeight: 900,
             fontStyle: 'italic',
-            fontSize: '24px',
+            fontSize: '26px',
             lineHeight: 0.95,
             letterSpacing: '-0.04em',
             color: t.colors.accent,
@@ -209,15 +212,15 @@ export function MainPage({
               <Value style={{ fontSize: '15px' }}>{fmtBirth(birthDate)}</Value>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <Label>подпись</Label>
-              <div style={{ height: '26px', borderBottom: `1px solid ${t.colors.border}`, position: 'relative' }}>
+              <div style={{ height: '30px', borderBottom: `1.5px solid ${t.colors.text}`, position: 'relative' }}>
                 {signatureSvg && (
                   <div
-                    style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
+                    style={{ position: 'absolute', inset: 0, overflow: 'hidden', display: 'flex', justifyContent: 'center' }}
                     dangerouslySetInnerHTML={{ __html: prepareSignatureSvg(signatureSvg) }}
                   />
                 )}
               </div>
+              <Label style={{ marginTop: '3px' }}>подпись</Label>
             </div>
           </div>
         </div>
@@ -248,9 +251,12 @@ export function MainPage({
             left: `${PAD}px`,
             width: `${CARD_W - PAD * 2}px`,
             height: '300px',
-            border: `2px dashed ${t.colors.border}`,
-            borderRadius: '16px',
+            border: `2px dashed ${t.colors.text}`,
+            borderRadius: '20px',
             background: 'transparent',
+            // полутоновый паттерн внутри зоны (как на макете)
+            backgroundImage: `radial-gradient(${t.colors.border} 0.9px, transparent 0.9px)`,
+            backgroundSize: '7px 7px',
             cursor: 'pointer',
             display: 'flex',
             flexWrap: 'wrap',
@@ -261,7 +267,7 @@ export function MainPage({
           }}
         >
           {badges.length === 0 ? (
-            <span style={{ fontSize: '40px', fontWeight: 300, color: '#7a7a7a', lineHeight: 1 }}>+</span>
+            <span style={{ fontSize: '64px', fontWeight: 400, color: t.colors.text, lineHeight: 1 }}>+</span>
           ) : (
             badges.map((b) => (
               <span
@@ -294,7 +300,7 @@ export function MainPage({
                 letterSpacing: '0.18em',
                 color: t.colors.border,
                 lineHeight: 1.5,
-                textAlign: i === 2 ? 'center' : 'left',
+                textAlign: 'center',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
               }}

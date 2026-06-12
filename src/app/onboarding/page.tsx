@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTMAUser } from '@/lib/telegram/sdk-provider'
 import { MainButtonBar } from '@/components/ui/MainButton'
@@ -12,6 +11,7 @@ import { PhotoZone, type PhotoZoneHandle } from '@/components/onboarding/PhotoZo
 import { SignatureScreen } from '@/components/onboarding/SignatureScreen'
 import { formatPassportNumber } from '@/lib/passport/identifier'
 import { generateCardMRZ } from '@/lib/passport/mrz'
+import { DEFAULT_THEME, type ThemeConfig } from '@/lib/passport/theme'
 import { haptic } from '@/lib/telegram/haptics'
 
 type Step =
@@ -65,10 +65,21 @@ export default function OnboardingPage() {
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const [rotateFallback, setRotateFallback] = useState(false)
   const [coverLeaving, setCoverLeaving] = useState(false)
+  const [theme, setTheme] = useState<ThemeConfig>(DEFAULT_THEME)
 
   const photoRef = useRef<PhotoZoneHandle>(null)
   const stepRef = useRef(step)
   stepRef.current = step
+
+  // ── Активная тема (фон, цвета кнопок, svg-элементы) ──
+  useEffect(() => {
+    fetch('/api/theme')
+      .then((r) => r.json())
+      .then((data: { theme_config?: ThemeConfig }) => {
+        if (data.theme_config) setTheme(data.theme_config)
+      })
+      .catch(() => { /* остаёмся на дефолте */ })
+  }, [])
 
   // ── Блокируем скролл документа + прячем кнопку при клавиатуре ──
   useEffect(() => {
@@ -252,8 +263,24 @@ export default function OnboardingPage() {
     else if (step === 'preview') setStep('photo')
   }
 
+  const ob = theme.onboarding
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#000', overflow: 'hidden', fontFamily: 'var(--font-inter), sans-serif' }}>
+      {/* Фоновое изображение темы (если задано) */}
+      {ob.background && (
+        <div
+          aria-hidden
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundImage: `url(${ob.background})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
       <style>{`
         @keyframes fadeInBlur {
           0% { opacity: 0; filter: blur(20px); transform: scale(0.95); }
@@ -283,7 +310,8 @@ export default function OnboardingPage() {
                 animation: 'fadeInBlur 1.5s ease-out forwards',
               }}
             >
-              <Image src="/icons/logo.svg" alt="Щёлочь" width={125} height={125} priority />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={ob.logo} alt="Щёлочь" width={125} height={125} style={{ objectFit: 'contain' }} />
               <span style={{
                 fontWeight: 900, fontStyle: 'italic', fontSize: '40px',
                 letterSpacing: '-0.12em', color: '#fff', lineHeight: 1, textTransform: 'uppercase',
@@ -383,7 +411,8 @@ export default function OnboardingPage() {
                   style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}
                 >
                   <div style={{ animation: 'rotateSpin 2s linear infinite' }}>
-                    <Image src="/icons/photo-loading.svg" alt="" width={80} height={80} />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={ob.spinner} alt="" width={80} height={80} style={{ objectFit: 'contain' }} />
                   </div>
                 </motion.div>
               )}
@@ -466,10 +495,15 @@ export default function OnboardingPage() {
               display: 'flex', justifyContent: 'center', alignItems: 'center',
               animation: `${step === 'rotate' ? 'phoneRotate' : 'phoneRotateBack'} 2.5s ease-in-out infinite alternate`,
             }}>
-              <svg viewBox="0 0 24 24" width="50" height="50" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
+              {ob.rotate_icon ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={ob.rotate_icon} alt="" width={50} height={50} style={{ objectFit: 'contain' }} />
+              ) : (
+                <svg viewBox="0 0 24 24" width="50" height="50" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+              )}
             </div>
           </motion.div>
         )}
@@ -515,9 +549,10 @@ export default function OnboardingPage() {
               transformStyle: 'preserve-3d',
               transform: coverLeaving ? 'scale(1.1) rotateY(-90deg)' : 'none',
             }}>
-              <Image
-                src="/icons/logo.svg" alt="" width={80} height={80}
-                style={{ filter: 'brightness(0)', opacity: 0.45, marginBottom: '16px' }}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ob.logo} alt="" width={80} height={80}
+                style={{ filter: 'brightness(0)', opacity: 0.45, marginBottom: '16px', objectFit: 'contain' }}
               />
               <span style={{ fontSize: '24px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#747373' }}>
                 ЩЁЛОЧЬ
@@ -529,12 +564,18 @@ export default function OnboardingPage() {
 
       {/* ═══ Нижняя кнопка ═══ */}
       {step !== 'signature' && step !== 'cover' && (
-        <MainButtonBar onClick={handleMainButton} disabled={buttonConfig.disabled} hidden={buttonConfig.hidden}>
+        <MainButtonBar
+          onClick={handleMainButton}
+          disabled={buttonConfig.disabled}
+          hidden={buttonConfig.hidden}
+          bg={ob.button_bg}
+          textColor={ob.button_text}
+        >
           {buttonConfig.text}
         </MainButtonBar>
       )}
       {step === 'cover' && (
-        <MainButtonBar onClick={handleGetPassport} hidden={coverLeaving}>
+        <MainButtonBar onClick={handleGetPassport} hidden={coverLeaving} bg={ob.button_bg} textColor={ob.button_text}>
           Получить
         </MainButtonBar>
       )}

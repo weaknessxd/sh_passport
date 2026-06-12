@@ -21,6 +21,17 @@ const CARD_H = 760
 const CARD_LEFT = 4
 const PAD = 26
 
+/** Иконка штампа: путь/URL → картинка, иначе текст (эмодзи). */
+function StampIcon({ icon }: { icon: string | null | undefined }) {
+  const v = icon ?? '★'
+  const isImage = v.startsWith('/') || v.startsWith('http') || v.startsWith('data:')
+  if (isImage) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={v} alt="" style={{ width: '44px', height: '44px', objectFit: 'contain' }} />
+  }
+  return <span style={{ fontSize: '30px', lineHeight: 1 }}>{v}</span>
+}
+
 export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8, themeConfig }: Props) {
   const t = themeConfig ?? DEFAULT_THEME
   const start = pageIndex * stampsPerPage
@@ -40,7 +51,7 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8, themeCon
           overflow: 'hidden',
         }}
       >
-        {/* Creatures watermark — bottom */}
+        {/* Водяной знак — низ карточки */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={t.watermark_stamps}
@@ -48,42 +59,48 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8, themeCon
           aria-hidden
           style={{
             position: 'absolute',
-            bottom: '40px',
-            left: '0',
+            bottom: '24px',
+            left: 0,
             width: '100%',
-            filter: 'brightness(0) opacity(0.07)',
+            filter: 'brightness(0) opacity(0.08)',
             pointerEvents: 'none',
           }}
         />
 
-        {/* 2×4 grid of stamp slots */}
+        {/* Сетка слотов 2×4 — растянута на всю высоту карточки */}
         <div
           style={{
             position: 'absolute',
             top: `${PAD}px`,
+            bottom: '52px',
             left: `${PAD}px`,
             width: `${CARD_W - PAD * 2}px`,
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '16px',
+            columnGap: '28px',
+            alignContent: 'space-between',
           }}
         >
           {slots.map((stamp, i) => (
             <div
               key={i}
               style={{
-                aspectRatio: '160 / 96',
+                height: '118px',
                 border: `1.5px dashed ${t.colors.border}`,
-                borderRadius: '14px',
+                borderRadius: '16px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
+                gap: '4px',
                 overflow: 'hidden',
+                padding: '6px',
+                boxSizing: 'border-box',
               }}
             >
               {stamp && (
-                <div style={{ textAlign: 'center', padding: '6px' }}>
-                  <div style={{ fontSize: '26px', lineHeight: 1 }}>{stamp.icon ?? '★'}</div>
+                <>
+                  <StampIcon icon={stamp.icon} />
                   <div
                     style={{
                       fontFamily: 'var(--font-inter), sans-serif',
@@ -91,28 +108,33 @@ export function StampsPage({ stamps = [], pageIndex, stampsPerPage = 8, themeCon
                       fontSize: '11px',
                       letterSpacing: '-0.03em',
                       color: t.colors.text,
-                      marginTop: '4px',
+                      textAlign: 'center',
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {stamp.name}
                   </div>
-                </div>
+                </>
               )}
             </div>
           ))}
         </div>
 
-        {/* Page number in card */}
+        {/* Номер страницы */}
         <div
           style={{
             position: 'absolute',
-            bottom: '14px',
+            bottom: '12px',
             left: '50%',
             transform: 'translateX(-50%)',
             fontFamily: 'var(--font-inter), sans-serif',
-            fontWeight: 700,
-            fontSize: '12px',
-            color: t.colors.label,
+            fontWeight: 800,
+            fontStyle: 'italic',
+            fontSize: '24px',
+            color: t.colors.border,
           }}
         >
           {pageIndex + 1}

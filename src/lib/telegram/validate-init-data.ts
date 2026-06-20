@@ -102,12 +102,10 @@ export function validateInitData(
     throw new InitDataValidationError('hash is missing')
   }
 
-  // Убираем hash перед сборкой строки для проверки.
-  // Также убираем signature — новые клиенты Telegram (Bot API 7.10+) добавляют
-  // это поле для сторонней Ed25519-проверки, и его нужно исключать из
-  // data_check_string для HMAC-проверки ботовским токеном.
+  // Убираем только hash. ВАЖНО: signature НЕ убираем — эмпирически проверено
+  // (diagnoseInitData → matchedVariant "decoded_withSig"), что Telegram включает
+  // поле signature в data_check_string при HMAC-проверке ботовским токеном.
   params.delete('hash')
-  params.delete('signature')
 
   // data_check_string: ключи в алфавитном порядке, "key=value", соединённые \n
   const dataCheckString = Array.from(params.entries())

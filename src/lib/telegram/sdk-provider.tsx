@@ -74,7 +74,19 @@ export function TMAProvider({ children }: { children: React.ReactNode }) {
 
     async function initTMA() {
       try {
-        const data = getInitData()
+        let data = getInitData()
+
+        // Демо-режим: вне Telegram берём подписанную сервером initData,
+        // чтобы можно было смотреть приложение в обычном браузере.
+        if (!data && process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+          try {
+            const r = await fetch('/api/demo-init')
+            if (r.ok) {
+              const j = (await r.json()) as { initData?: string }
+              if (j.initData) data = j.initData
+            }
+          } catch { /* ignore */ }
+        }
 
         if (!data) {
           throw new Error('Открой приложение через Telegram')

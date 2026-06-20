@@ -44,25 +44,44 @@ export class InitDataValidationError extends Error {
  * до двоеточия) и первые символы хешей.
  */
 export function diagnoseInitData(initData: string, botToken: string) {
-  const params = new URLSearchParams(initData)
-  const providedHash = params.get('hash') ?? ''
-  const hasSignature = params.has('signature')
-  params.delete('hash')
-  params.delete('signature')
-  const keys = Array.from(params.keys()).sort()
-  const dataCheckString = Array.from(params.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join('\n')
+  // Парсим вручную, чтобы иметь и сырые (encoded), и декодированные значения
+  const pairs = initData.split('&').map((p) => {
+    const i = p.indexOf('=')
+    return { key: p.slice(0, i), raw: p.slice(i + 1) }
+  })
+  const providedHash = pairs.find((p) => p.key === 'hash')?.raw ?? ''
+  const hasSignature = pairs.some((p) => p.key === 'signature')
+
   const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest()
-  const computed = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex')
+  const hmac = (s: string) => crypto.createHmac('sha256', secretKey).update(s).digest('hex')
+
+  // Кандидаты сборки data_check_string
+  function build(opts: { decode: boolean; includeSignature: boolean }): string {
+    return pairs
+      .filter((p) => p.key !== 'hash' && (opts.includeSignature || p.key !== 'signature'))
+      .map((p) => ({ key: p.key, value: opts.decode ? decodeURIComponent(p.raw) : p.raw }))
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map((p) => `${p.key}=${p.value}`)
+      .join('\n')
+  }
+
+  const variants: Record<string, string> = {
+    decoded_noSig: build({ decode: true, includeSignature: false }),
+    decoded_withSig: build({ decode: true, includeSignature: true }),
+    raw_noSig: build({ decode: false, includeSignature: false }),
+    raw_withSig: build({ decode: false, includeSignature: true }),
+  }
+
+  const matched = Object.entries(variants).find(([, s]) => hmac(s) === providedHash)?.[0] ?? null
+
   return {
-    keys,
+    keys: pairs.map((p) => p.key).sort(),
     hasSignature,
     serverBotId: botToken.split(':')[0],
-    computedPrefix: computed.slice(0, 12),
     providedPrefix: providedHash.slice(0, 12),
-    match: computed === providedHash,
+    computedPrefix: hmac(variants.decoded_noSig!).slice(0, 12),
+    // какой вариант сборки даёт совпадение с подписью Telegram (null = ни один)
+    matchedVariant: matched,
   }
 }
 

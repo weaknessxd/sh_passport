@@ -38,6 +38,34 @@ export class InitDataValidationError extends Error {
   }
 }
 
+/**
+ * Диагностика без выбрасывания ошибок — для отладки «hash mismatch».
+ * Секреты не раскрывает: только список ключей, id бота (публичная часть токена
+ * до двоеточия) и первые символы хешей.
+ */
+export function diagnoseInitData(initData: string, botToken: string) {
+  const params = new URLSearchParams(initData)
+  const providedHash = params.get('hash') ?? ''
+  const hasSignature = params.has('signature')
+  params.delete('hash')
+  params.delete('signature')
+  const keys = Array.from(params.keys()).sort()
+  const dataCheckString = Array.from(params.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n')
+  const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest()
+  const computed = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex')
+  return {
+    keys,
+    hasSignature,
+    serverBotId: botToken.split(':')[0],
+    computedPrefix: computed.slice(0, 12),
+    providedPrefix: providedHash.slice(0, 12),
+    match: computed === providedHash,
+  }
+}
+
 export function validateInitData(
   initData: string,
   botToken: string,

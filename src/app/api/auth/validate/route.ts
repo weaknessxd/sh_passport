@@ -12,6 +12,7 @@ import { eq } from 'drizzle-orm'
 import {
   validateInitData,
   InitDataValidationError,
+  diagnoseInitData,
 } from '@/lib/telegram/validate-init-data'
 import { db } from '@/lib/db/client'
 import { users, presets } from '@/lib/db/schema'
@@ -47,7 +48,9 @@ export async function POST(request: Request) {
     validated = validateInitData(body.initData, botToken)
   } catch (e) {
     if (e instanceof InitDataValidationError) {
-      return NextResponse.json({ error: e.message }, { status: 401 })
+      // Временная диагностика для отладки hash mismatch
+      const diag = diagnoseInitData(body.initData, botToken)
+      return NextResponse.json({ error: e.message, diag }, { status: 401 })
     }
     throw e
   }
